@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Loan Admin</title>
+
+<style>
+
+/* ===========================================
+   THEME VARIABLES — MATCH EXACTLY WITH ROI
+   =========================================== */
+
+html {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --input-bg: #020617;
+  --input-border: #334155;
+  --shadow: 0 18px 40px rgba(0,0,0,0.4);
+  --button-bg: #1e293b;
+  --button-border: #334155;
+  --delete-bg: #111827;
+  --delete-border: #374151;
+  --green: #22c55e;
+}
+
+html[data-theme="light"] {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08);
+  --button-bg: #ffffff;
+  --button-border: #cbd5e1;
+  --delete-bg: #f1f5f9;
+  --delete-border: #cbd5e1;
+  --green: #16a34a;
+}
+
+/* Smooth theme transition */
+body, table, th, td, input, select, button {
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ===========================================
+   GLOBAL LAYOUT
+   =========================================== */
+
+body {
+  margin: 0;
+  padding: 1.5rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Titles */
+h1 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1.45rem;
+}
+
+/* ===========================================
+   HEADER LAYOUT (match ROI behavior)
+   =========================================== */
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.4rem;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-right {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+  
+.sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+/* ===========================================
+   BUTTONS
+   =========================================== */
+
+button {
+  border-radius: 999px;
+  border: 1px solid var(--button-border);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  background: var(--button-bg);
+  color: var(--text);
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Add Loan (green pill) */
+#add-row {
+  background: var(--green);
+  border-color: var(--green);
+  color: #ffffff;
+}
+
+/* Save button */
+#save-btn {
+  background: var(--button-bg);
+  border-color: var(--button-border);
+}
+
+/* Delete button — small, dark, not red */
+.delete-btn {
+  background: var(--delete-bg) !important;
+  border: 1px solid var(--delete-border) !important;
+  color: var(--text) !important;
+  font-size: 0.75rem !important;
+  padding: 0.22rem 0.6rem !important;
+  border-radius: 0.35rem !important;
+}
+
+/* ===========================================
+   Events button highlight
+   =========================================== */
+.events-btn {
+  position: relative;
+}
+
+.events-btn.has-events {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+.events-btn.has-default {
+  border-color: #ef4444;
+  color: #fecaca;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.45);
+}
+
+/* small dot indicator */
+.events-btn.has-events::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+}
+
+.events-btn.has-default::after {
+  background: #ef4444;
+}
+
+  
+/* ===========================================
+   STATUS PILL (matches ROI)
+   =========================================== */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+/* ===========================================
+   TABLE (matches ROI card/table style)
+   =========================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+  font-size: 0.78rem;
+}
+
+thead {
+  background: var(--card);
+}
+
+th, td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+th.sortable {
+  cursor: pointer;
+}
+
+th.sortable:hover {
+  color: var(--text);
+}
+
+tbody tr:hover {
+  background: color-mix(in srgb, var(--card) 90%, var(--text) 10%);
+}
+
+/* ===========================================
+   STICKY TABLE HEADER
+   =========================================== */
+
+#loan-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  /* Ensure header stays visually solid while scrolling */
+  background: var(--card);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+  
+/* ===========================================
+   INPUTS + SELECTS
+   =========================================== */
+
+input, select {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.45rem;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  padding: 0.25rem 0.3rem;
+  font-size: 0.78rem;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+/* Column widths */
+.cell-id { max-width: 50px; }
+.cell-number { max-width: 100px; }
+.cell-date { max-width: 130px; }
+.cell-school { min-width: 140px; }
+.cell-name { min-width: 150px; }
+
+  /* Tight numeric columns */
+.col-money,
+.col-rate,
+.col-years {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Make inputs shrink to content */
+.col-money input,
+.col-rate input,
+.col-years input {
+  width: 100%;
+  min-width: 72px;
+  text-align: right;
+}
+
+/* Actions column gets priority space */
+.col-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+  #feedback-btn {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+#feedback-btn:hover {
+  transform: scale(1.05);
+}
+
+
+</style>
+
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+<div class="header-row">
+  <div class="header-left">
+    <h1>Loan Admin</h1>
+    <p>Edit the loans that power the ROI, Earnings, and Amort pages</p>
+  </div>
+
+  <div class="header-right">
+    <!-- NAVIGATION BUTTON -->
+<button id="port-btn">
+  📊 MY HOLDINGS
+</button>
+<select id="admin-user-select" style="padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--button-border); background: var(--button-bg); color: var(--text); font-size: 0.8rem;">
+  <option value="jeff" selected>Jeff Customer</option>
+  <option value="nick">Nick Lender</option>
+  <option value="john">John Investor</option>
+</select>
+
+
+
+    <!-- THEME TOGGLE -->
+    <button id="themeToggle" class="toggle-btn">🌙</button>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div id="status" class="pill">Idle</div>
+
+<!-- =========================================================
+     TOP BUTTONS (ADD ROW + SAVE)
+     ========================================================= -->
+<div style="margin: 16px 0; display: flex; gap: 10px;">
+  <button id="add-row">+ Add Loan</button>
+  <button id="save-btn">💾 Save Changes</button>
+</div>
+
+<div
+  id="unsaved-warning"
+  style="
+    display:none;
+    margin-top:6px;
+    font-size:0.8rem;
+    color:#b91c1c;
+  "
+>
+  ⚠️ You have unsaved changes — click <strong>Save Changes</strong> to apply them
+</div>
+
+  
+<!-- =========================================================
+     TABLE
+     ========================================================= -->
+<table id="loan-table">
+  <thead>
+    <tr>
+      <th data-field="loanId" class="sortable">ID</th>
+      <th data-field="loanName" class="sortable">Loan Name</th>
+      <th>Ownership</th>
+      <th data-field="visible" class="sortable">Show</th>
+      <th data-field="school" class="sortable">School</th>
+      <th data-field="loanStartDate" class="sortable">Loan Start Date</th>
+      <th data-field="principal" class="sortable col-money">Orig Loan Amt</th>
+      <th data-field="rate" class="sortable col-rate">Rate</th>
+      <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
+      <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
+      <th class="col-actions">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="loan-table-body"></tbody>
+</table>
+
+<!-- =========================================================
+     SCRIPT: FUNCTIONALITY (from working WrongColors version)
+     ========================================================= -->
+<script type="module">
+  import { loadLoans } from "/loan-dashboard/js/loadLoans.js?v=dev";
+
+  import { normalizeOwnership } from "/loan-dashboard/js/ownershipEngine.js?v=dev";
+
+  const USER_OPTIONS = [
+  { value: "jeff", label: "Jeff Customer" },
+  { value: "nick", label: "Nick Lender" },
+  { value: "john", label: "John Investor" }
+];
+
+  let currentLoans = [];
+  let currentSha = null;
+
+  // ===========================
+// UNSAVED CHANGES TRACKING
+// ===========================
+let hasUnsavedChanges = false;
+
+const unsavedWarning = document.getElementById("unsaved-warning");
+const saveBtn = document.getElementById("save-btn");
+
+function markDirty() {
+  if (hasUnsavedChanges) return;
+  hasUnsavedChanges = true;
+
+  if (unsavedWarning) unsavedWarning.style.display = "block";
+  if (saveBtn) saveBtn.style.borderColor = "#fbbf24";
+}
+
+  function clearDirty() {
+  hasUnsavedChanges = false;
+
+  if (unsavedWarning) unsavedWarning.style.display = "none";
+  if (saveBtn) saveBtn.style.borderColor = "";
+}
+
+// =====================================================
+// WARN BEFORE LEAVING WITH UNSAVED CHANGES
+// =====================================================
+window.addEventListener("beforeunload", (e) => {
+  if (!hasUnsavedChanges) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
+
+let sortColumn = null;
+let sortDirection = 1; // 1 for ascending, -1 for descending
+
+function generateLoanId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let id = "";
+  for (let i = 0; i < 10; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+  
+const schoolOptions = [
+  "Penn State","Ohio State","Pitt","Carnegie Mellon",
+  "Michigan","UCLA","USC","NYU",
+  "Wyoming Catholic College",
+  "Ave Maria University",
+  "Texas Tech University"
+];
+
+function openEventsDrawer(loan) {
+  const existing = document.getElementById("events-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "events-drawer";
+  drawer.style.cssText = `
+    position:fixed;
+    top:0;
+    right:0;
+    width:360px;
+    height:100%;
+    background:var(--card);
+    box-shadow:var(--shadow);
+    padding:16px;
+    z-index:1000;
+    overflow:auto;
+  `;
+
+  drawer.innerHTML = `
+  <h3 style="margin-top:0">Events — ${loan.loanName}</h3>
+
+  <div style="margin-bottom:12px;color:var(--muted);font-size:0.8rem">
+    Loan lifecycle events (Prepayments, Deferrals & Default)
+  </div>
+
+  <div id="event-list" style="margin-bottom:16px">
+    ${
+      loan.events.length === 0
+        ? `<div style="color:var(--muted)">No events yet</div>`
+        : loan.events.map(e => `
+            <div style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              margin-bottom:6px;
+              font-size:12px;
+            ">
+              <div>
+                ${
+                  e.type === "prepayment"
+                    ? `💰 Prepay — ${e.date} — $${Number(e.amount).toLocaleString()}`
+                  : e.type === "deferral"
+                    ? `⏸ Deferral — ${e.startDate} — ${e.months} mo`
+                  : `⚠️ Default — ${e.date} — Recovery $${Number(e.recoveryAmount).toLocaleString()}`
+                }
+              </div>
+              <button data-event-id="${e.id}" style="font-size:11px;padding:2px 6px">
+                Delete
+              </button>
+            </div>
+          `).join("")
+    }
+  </div>
+
+  <hr style="border-color:var(--border);margin:12px 0">
+
+  <h4>Add Prepayment</h4>
+  <input type="date" id="evt-date" style="margin-bottom:6px;width:100%">
+  <input type="number" id="evt-amount" placeholder="Amount" style="margin-bottom:8px;width:100%">
+  <button id="add-prepay-btn">Add Prepayment</button>
+
+  <hr style="border-color:var(--border);margin:14px 0">
+
+  <h4>Add Deferral</h4>
+  <input type="date" id="def-start" style="margin-bottom:6px;width:100%">
+  <input type="number" id="def-months" placeholder="Months" min="1" style="margin-bottom:8px;width:100%">
+  <button id="add-deferral-btn">Add Deferral</button>
+
+  <hr style="border-color:var(--border);margin:14px 0">
+
+  <h4 style="color:#f87171">Add Default</h4>
+  <input type="date" id="def-date" style="margin-bottom:6px;width:100%">
+  <input
+    type="number"
+    id="def-recovery"
+    placeholder="Collections Recovery ($0 allowed)"
+    min="0"
+    step="0.01"
+    style="margin-bottom:8px;width:100%"
+  >
+  <button id="add-default-btn" style="background:#7f1d1d;border-color:#7f1d1d;color:white">
+    Add Default
+  </button>
+
+  <button id="close-event-btn">Close</button>
+`;
+
+  document.body.appendChild(drawer);
+
+  // -------------------------------
+  // Delete event
+  // -------------------------------
+  drawer.querySelectorAll("button[data-event-id]").forEach(btn => {
+    btn.onclick = () => {
+      if (!confirm("Delete this event?")) return;
+
+      const id = btn.dataset.eventId;
+      loan.events = loan.events.filter(e => e.id !== id);
+      markDirty();
+
+      drawer.remove();
+      openEventsDrawer(loan);
+      renderTable(); // ✅ UPDATE TABLE
+    };
+  });
+
+  drawer.querySelector("#close-event-btn").onclick = () => {
+    drawer.remove();
+  };
+
+  // -------------------------------
+  // Add prepayment
+  // -------------------------------
+  drawer.querySelector("#add-prepay-btn").onclick = () => {
+    const date = drawer.querySelector("#evt-date").value;
+    const amount = Number(drawer.querySelector("#evt-amount").value);
+
+    if (!date || !amount || amount <= 0) {
+      alert("Enter a valid date and amount");
+      return;
+    }
+
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "prepayment",
+      date,
+      amount
+    });
+
+    loan.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    markDirty();
+
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable(); // ✅ UPDATE TABLE
+  };
+
+  // -------------------------------
+  // Add deferral
+  // -------------------------------
+  drawer.querySelector("#add-deferral-btn").onclick = () => {
+    const startDate = drawer.querySelector("#def-start").value;
+    const months = Number(drawer.querySelector("#def-months").value);
+
+    if (!startDate || !months || months <= 0) {
+      alert("Enter a valid start date and number of months");
+      return;
+    }
+
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "deferral",
+      startDate,
+      months
+    });
+
+    loan.events.sort((a, b) => {
+      const da = new Date(a.startDate || a.date);
+      const db = new Date(b.startDate || b.date);
+      return da - db;
+    });
+
+    markDirty();
+
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable(); // ✅ UPDATE TABLE
+  };
+
+  // -------------------------------
+  // Add default
+  // -------------------------------
+  drawer.querySelector("#add-default-btn").onclick = () => {
+    const date = drawer.querySelector("#def-date").value;
+    const recoveryAmount = Number(drawer.querySelector("#def-recovery").value);
+
+    if (!date || recoveryAmount < 0 || Number.isNaN(recoveryAmount)) {
+      alert("Enter a valid default date and recovery amount (≥ $0)");
+      return;
+    }
+
+    if (loan.events.some(e => e.type === "default")) {
+      alert("This loan already has a Default event.");
+      return;
+    }
+
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "default",
+      date,
+      recoveryAmount
+    });
+
+    loan.events.sort((a, b) => {
+      const da = new Date(a.startDate || a.date);
+      const db = new Date(b.startDate || b.date);
+      return da - db;
+    });
+
+    markDirty();
+
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable(); // ✅ UPDATE TABLE
+  };
+}
+
+function openOwnershipDrawer(loan) {
+  const existing = document.getElementById("ownership-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "ownership-drawer";
+  drawer.style.cssText = `
+    position:fixed;
+    top:0;
+    right:0;
+    width:420px;
+    height:100%;
+    background:var(--card);
+    box-shadow:var(--shadow);
+    padding:16px;
+    z-index:1000;
+    overflow:auto;
+  `;
+
+  function renderLots() {
+    return loan.ownershipLots.map((lot, idx) => `
+      <div style="display:grid;grid-template-columns:1fr 80px 120px 100px auto;gap:6px;margin-bottom:6px">
+        <select data-idx="${idx}" data-field="user">
+          ${USER_OPTIONS.map(u =>
+            `<option value="${u.value}" ${u.value === lot.user ? "selected" : ""}>
+              ${u.label}
+            </option>`
+          ).join("")}
+        </select>
+
+        <input type="number" step="0.01" min="0"
+          data-idx="${idx}" data-field="pct"
+          value="${(lot.pct * 100).toFixed(2)}">
+
+        <input type="date"
+          data-idx="${idx}" data-field="purchaseDate"
+          value="${lot.purchaseDate || ""}">
+
+        <input type="number" step="0.01"
+          data-idx="${idx}" data-field="pricePaid"
+          value="${lot.pricePaid ?? 0}">
+
+        <button data-action="remove-lot" data-idx="${idx}">✕</button>
+      </div>
+    `).join("");
+  }
+
+  drawer.innerHTML = `
+    <h3 style="margin-top:0">Ownership — ${loan.loanName}</h3>
+
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px">
+      Each row is a distinct ownership lot. Percentages must total 100%.
+    </div>
+
+    <div id="lot-list">
+      ${renderLots()}
+    </div>
+
+    <button id="add-lot-btn" style="margin-top:8px">+ Add Lot</button>
+
+    <hr style="margin:14px 0;border-color:var(--border)">
+
+    <button id="close-ownership-btn">Close</button>
+  `;
+
+  document.body.appendChild(drawer);
+
+  // -------------------------
+  // Change handlers
+  // -------------------------
+  drawer.addEventListener("input", e => {
+    const idx = Number(e.target.dataset.idx);
+    const field = e.target.dataset.field;
+    if (Number.isNaN(idx) || !field) return;
+
+    if (field === "pct") {
+      loan.ownershipLots[idx].pct = Number(e.target.value) / 100;
+    } else {
+      loan.ownershipLots[idx][field] = e.target.value;
+    }
+
+    markDirty();
+    renderTable();
+  });
+
+  // -------------------------
+  // Remove lot
+  // -------------------------
+  drawer.addEventListener("click", e => {
+    if (e.target.dataset.action === "remove-lot") {
+      const idx = Number(e.target.dataset.idx);
+      loan.ownershipLots.splice(idx, 1);
+      markDirty();
+      drawer.remove();
+      openOwnershipDrawer(loan);
+      renderTable();
+    }
+  });
+
+  // -------------------------
+  // Add lot
+  // -------------------------
+  drawer.querySelector("#add-lot-btn").onclick = () => {
+    loan.ownershipLots.push({
+      user: USER_OPTIONS[0].value,
+      pct: 0,
+      purchaseDate: "",
+      pricePaid: 0
+    });
+
+    markDirty();
+    drawer.remove();
+    openOwnershipDrawer(loan);
+  };
+
+  drawer.querySelector("#close-ownership-btn").onclick = () => {
+    drawer.remove();
+  };
+}
+
+
+
+function normalizeLoan(l, idx) {
+  // If backend ID is numeric (old system), replace it with a new random ID
+  let newId;
+  if (!l.loanId || /^[0-9]+$/.test(String(l.loanId))) {
+    newId = generateLoanId();
+  } else {
+    newId = l.loanId;
+  }
+
+  const loan = {
+    loanId: newId,
+    loanName: l.loanName ?? "",
+    school: l.school ?? "",
+    loanStartDate: l.loanStartDate ?? "",
+    principal: Number(l.principal ?? 0),
+    rate: (() => {
+  if (typeof l.rate === "string") {
+    const cleaned = l.rate.replace("%", "").trim();
+    return Number(cleaned) / 100;
+  }
+  return Number(l.rate ?? 0);
+})(),
+
+    termYears: Number(l.termYears ?? 10),
+    graceYears: Number(l.graceYears ?? 0),
+
+    // legacy fields (USED ONLY FOR MIGRATION)
+    user: l.user ?? "jeff",
+    purchaseDate: l.purchaseDate ?? "",
+    purchasePrice: Number(l.purchasePrice ?? 0),
+
+    visible: l.visible !== false,
+
+    events: Array.isArray(l.events)
+      ? l.events.map(e => {
+          if (e.type === "default") {
+            return {
+              id: e.id ?? crypto.randomUUID(),
+              type: "default",
+              date: e.date ?? "",
+              recoveryAmount: Number(e.recoveryAmount ?? 0)
+            };
+          }
+          return e;
+        })
+      : [],
+
+    ownership: l.ownership,
+    ownershipLots: l.ownershipLots
+  };
+
+  // 🔑 CANONICALIZE OWNERSHIP
+  normalizeOwnership(loan);
+
+  return loan;
+}
+
+
+/* Sort loans */
+function sortLoans() {
+  if (!sortColumn) return;
+
+  currentLoans.sort((a, b) => {
+    let va = a[sortColumn];
+    let vb = b[sortColumn];
+
+    if (sortColumn === 'visible') {
+      va = a.visible ? 1 : 0;
+      vb = b.visible ? 1 : 0;
+    } else if (['loanStartDate', 'purchaseDate'].includes(sortColumn)) {
+      va = va ? new Date(va) : new Date(0);
+      vb = vb ? new Date(vb) : new Date(0);
+    } else if (typeof va === 'string') {
+      va = va.toLowerCase();
+      vb = vb.toLowerCase();
+    } else if (isNaN(va)) {
+      va = 0;
+    } else if (isNaN(vb)) {
+      vb = 0;
+    }
+
+    if (va < vb) return -sortDirection;
+    if (va > vb) return sortDirection;
+    return 0;
+  });
+}
+
+function renderOwnershipCell(loan) {
+  const byUser = {};
+
+  loan.ownershipLots.forEach(lot => {
+    if (!byUser[lot.user]) byUser[lot.user] = [];
+    byUser[lot.user].push(lot);
+  });
+
+  return Object.entries(byUser)
+    .map(([user, lots]) => {
+      return lots
+        .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate))
+        .map(lot => {
+          const pct = Math.round(lot.pct * 100);
+          const date = lot.purchaseDate || "—";
+          return `<div style="font-size:11px">
+            <strong>${user}</strong> ${pct}% <span style="color:var(--muted)">(${date})</span>
+          </div>`;
+        })
+        .join("");
+    })
+    .join("");
+}
+
+  
+/* Render table */
+function renderTable() {
+  sortLoans(); // Sort before rendering
+
+  const tbody = document.getElementById("loan-table-body");
+  tbody.innerHTML = "";
+
+  currentLoans.forEach((loan) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${loan.loanId}</td>
+
+      <td>
+        <input type="text" value="${loan.loanName}" data-field="loanName">
+      </td>
+
+      <td data-action="ownership" style="cursor:pointer">
+  ${renderOwnershipCell(loan)}
+</td>
+
+
+      <td style="text-align:center">
+        <input
+          type="checkbox"
+          data-field="visible"
+          ${loan.visible !== false ? "checked" : ""}
+        />
+      </td>
+
+      <td>
+        <select data-field="school">
+          ${schoolOptions.map(s =>
+            `<option value="${s}" ${loan.school === s ? "selected" : ""}>${s}</option>`
+          ).join("")}
+        </select>
+      </td>
+
+      <td>
+        <input type="date" value="${loan.loanStartDate}" data-field="loanStartDate">
+      </td>
+
+      <td class="col-money">
+        <input type="number" step="0.01" value="${loan.principal}" data-field="principal">
+      </td>
+
+      <td class="col-rate">
+  <input
+    type="number"
+    step="0.01"
+    value="${(loan.rate * 100).toFixed(2)}"
+    data-field="rate"
+  >
+</td>
+
+
+      <td class="col-years">
+        <input type="number" step="1" value="${loan.termYears}" data-field="termYears">
+      </td>
+
+      <td class="col-years">
+        <input type="number" step="0.1" value="${loan.graceYears}" data-field="graceYears">
+      </td>
+
+      <td class="col-actions">
+        <button
+  class="delete-btn events-btn
+    ${loan.events?.length ? "has-events" : ""}
+    ${loan.events?.some(e => e.type === "default") ? "has-default" : ""}"
+  data-action="events"
+>
+  Events
+</button>
+
+        <button class="delete-btn" data-action="duplicate" style="margin-left:6px;">Duplicate</button>
+        <button class="delete-btn" data-action="delete" style="margin-left:6px;">Delete</button>
+      </td>
+    `;
+
+    tr.dataset.loanId = loan.loanId;
+    tbody.appendChild(tr);
+  });
+}
+
+
+  /* Collect from table */
+function collectLoans() {
+  const rows = document.querySelectorAll("#loan-table-body tr");
+  const list = [];
+
+  rows.forEach(row => {
+    const obj = {};
+    const inputs = row.querySelectorAll("[data-field]");
+
+    const ALLOWED_FIELDS = new Set([
+  "loanName",
+  "visible",
+  "school",
+  "loanStartDate",
+  "principal",
+  "rate",
+  "termYears",
+  "graceYears"
+]);
+
+inputs.forEach(inp => {
+  const k = inp.dataset.field;
+  if (!ALLOWED_FIELDS.has(k)) return;
+
+  let v;
+  if (inp.type === "checkbox") {
+    v = inp.checked;
+  } else {
+    v = inp.value;
+  }
+
+  if (k === "rate") {
+  v = Number(v) / 100; // convert % back to decimal
+} else if (["principal","termYears","graceYears"].includes(k)) {
+  v = Number(v);
+}
+
+
+  obj[k] = v;
+});
+
+
+    const loanId = row.dataset.loanId;
+    obj.loanId = loanId;
+
+    // ✅ PRESERVE EVENTS FROM CURRENT STATE
+    const existing = currentLoans.find(l => String(l.loanId) === String(loanId));
+    obj.events = Array.isArray(existing?.events) ? existing.events : [];
+
+// 🔑 PRESERVE OWNERSHIP LOTS (CANONICAL)
+obj.ownershipLots = Array.isArray(existing?.ownershipLots)
+  ? structuredClone(existing.ownershipLots)
+  : [];
+
+    
+    list.push(obj);
+  });
+
+  return list;
+}
+
+
+
+  
+    /* Load from Worker */
+  const status = document.getElementById("status");
+
+async function loadFromBackend() {
+  status.textContent = "Loading…";
+
+  try {
+    const url =
+      "https://loan-dashboard-api.jeff-263.workers.dev/loans?t=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store" });
+
+    if (!res.ok) {
+      throw new Error(`Load failed: ${res.status}`);
+    }
+
+    const data = await res.json();   // ✅ THIS WAS MISSING
+
+    currentLoans = data.loans.map(normalizeLoan);
+    currentSha = data.sha;
+
+    renderTable();
+    status.textContent = "Loaded ✔";
+  } catch (e) {
+    console.error("[ADMIN] loadFromBackend failed", e);
+    status.textContent = "Load failed";
+  }
+}
+
+
+/* Save to Worker */
+async function saveToBackend() {
+  status.textContent = "Saving…";
+
+  const updated = collectLoans();
+
+  // =====================================================
+  // VALIDATION — block saving invalid or missing values
+  // =====================================================
+  for (const loan of updated) {
+
+    // ---- existing validations ----
+    if (loan.principal === "" || loan.principal === null || Number(loan.principal) <= 0) {
+      alert(`Loan "${loan.loanName}" must have an Original Loan Amount greater than 0.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    if (!loan.loanStartDate || loan.loanStartDate === "") {
+      alert(`Loan "${loan.loanName}" is missing a Loan Start Date.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    // ---- DEFAULT EVENT VALIDATION ----
+    const defaults = loan.events?.filter(e => e.type === "default") || [];
+
+    if (defaults.length > 1) {
+      alert(`Loan "${loan.loanName}" has more than one Default event.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    if (defaults.length === 1) {
+      const d = defaults[0];
+
+      if (!d.date) {
+        alert(`Loan "${loan.loanName}" default is missing a date.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+
+      if (d.recoveryAmount == null || d.recoveryAmount < 0) {
+        alert(`Loan "${loan.loanName}" default recovery amount must be $0 or more.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+    }
+
+// ---- OWNERSHIP VALIDATION ----
+if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
+  alert(`Loan "${loan.loanName}" has no ownership lots.`);
+  status.textContent = "Save blocked";
+  return;
+}
+
+const sum = loan.ownershipLots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
+if (Math.abs(sum - 1) > 0.0001) {
+  alert(`Loan "${loan.loanName}" ownership must total 100%.`);
+  status.textContent = "Save blocked";
+  return;
+}
+
+for (const lot of loan.ownershipLots) {
+  if (!lot.user || !lot.purchaseDate || lot.pct <= 0) {
+    alert(`Loan "${loan.loanName}" has an invalid ownership lot.`);
+    status.textContent = "Save blocked";
+    return;
+  }
+}
+    
+  }
+
+updated.forEach(loan => {
+  delete loan.user;
+  delete loan.purchaseDate;
+  delete loan.purchasePrice;
+});
+
+
+
+  
+  // =====================================================
+  // SAVE (only runs if validation passed)
+  // =====================================================
+  try {
+    const res = await fetch("https://loan-dashboard-api.jeff-263.workers.dev/loans", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        loans: updated,
+        sha: currentSha
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw data;
+
+    currentSha = data.content.sha;
+    status.textContent = "Saved ✔";
+    clearDirty();
+
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Save failed";
+  }
+}
+
+
+  /* Buttons */
+ document.getElementById("add-row").onclick = () => {
+  currentLoans.push(normalizeLoan({}, currentLoans.length));
+  renderTable();
+  markDirty();   // ✅ REQUIRED
+};
+
+
+  document.getElementById("save-btn").onclick = saveToBackend;
+
+  // =====================================================
+// GLOBAL DIRTY TRACKING FOR TABLE EDITS
+// =====================================================
+const loanTable = document.getElementById("loan-table");
+
+// Fires while typing (text / number inputs)
+loanTable.addEventListener("input", (e) => {
+  if (e.target.matches("[data-field]")) {
+    markDirty();
+  }
+});
+
+// Fires on blur / dropdown / checkbox changes
+loanTable.addEventListener("change", (e) => {
+  if (e.target.matches("[data-field]")) {
+    markDirty();
+  }
+});
+
+
+  document.getElementById("loan-table").addEventListener("click", (e) => {
+const actionEl = e.target.closest("[data-action]");
+if (!actionEl) return;
+
+const action = actionEl.dataset.action;
+const row = actionEl.closest("tr");
+
+    const idx = Array.from(row.parentNode.children).indexOf(row);
+    
+      if (action === "events") {
+      const loan = currentLoans[idx];
+      openEventsDrawer(loan);
+      return;
+    }
+
+if (action === "ownership") {
+  const loan = currentLoans[idx];
+  openOwnershipDrawer(loan);
+  return;
+}
+
+    
+   if (action === "delete") {
+  if (!confirm("Delete this loan?")) return;
+
+  currentLoans.splice(idx, 1);
+  renderTable();
+  markDirty();   // ✅ REQUIRED
+  return;
+}
+
+
+    if (action === "duplicate") {
+    const clone = { ...currentLoans[idx] };
+
+    // Build a set of existing IDs to avoid accidental collisions
+    const existingIds = new Set(currentLoans.map(l => String(l.loanId)));
+    let newId;
+    do {
+      newId = generateLoanId();
+    } while (existingIds.has(newId));
+
+    clone.loanId = newId;
+    clone.loanName = clone.loanName + " (Copy)";
+
+    currentLoans.push(clone);
+    renderTable();
+    return;
+  }
+
+  });
+
+
+  /* ===========================
+     THEME TOGGLE
+     =========================== */
+  const themeToggle = document.getElementById("themeToggle");
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    themeToggle.textContent = t === "dark" ? "🌙" : "☀️";
+    localStorage.setItem("admin-theme", t);
+  }
+
+  themeToggle.onclick = () => {
+    const newTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(newTheme);
+  };
+
+  const savedTheme = localStorage.getItem("admin-theme") || "light";
+  applyTheme(savedTheme);
+
+  // Sorting setup
+  document.querySelectorAll('#loan-table thead th.sortable').forEach(th => {
+    th.onclick = () => {
+      const field = th.dataset.field;
+      if (sortColumn === field) {
+        sortDirection = -sortDirection;
+      } else {
+        sortColumn = field;
+        sortDirection = 1;
+      }
+
+      // Clear arrows from all headers
+      document.querySelectorAll('#loan-table thead th').forEach(t => {
+        t.innerHTML = t.innerHTML.replace(/ [↑↓]$/, '');
+      });
+
+      // Add arrow to current header
+      th.innerHTML += ` ${sortDirection === 1 ? '↑' : '↓'}`;
+
+      renderTable();
+    };
+  });
+
+  loadFromBackend();
+
+  // Add Port Dashboard link logic
+  const portBtn = document.getElementById('port-btn');
+  const userSelect = document.getElementById('admin-user-select');
+
+  portBtn.onclick = () => {
+    const user = userSelect.value;
+    window.open(`/loan-dashboard/reporting.html?user=${user}`, '_blank');
+  };
+
+</script>
+
+<script src="/loan-dashboard/js/feedback.js"></script>
+  
+</body>
+</html>
