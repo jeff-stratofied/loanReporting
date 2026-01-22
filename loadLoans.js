@@ -1,4 +1,4 @@
-// js/loadLoans.js
+// /loadLoans.js
 
 const API_URL = "https://loan-dashboard-api.jeff-263.workers.dev/loans";
 
