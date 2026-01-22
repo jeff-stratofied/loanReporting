@@ -1146,22 +1146,22 @@ html[data-theme="dark"] .close-btn {
 
 
   <script type="module">
-    import { loadLoans } from "../js/loadLoans.js?v=dev";
+    import { loadLoans } from "./loadLoans.js?v=dev";
 import {
   attachSchedules,
   getCurrentScheduleIndex,
   getCurrentLoanBalance
-} from "../js/loanEngine.js?v=dev";
+} from "./loanEngine.js?v=dev";
 
 
-    import { normalizeLoan } from "../js/normalizeLoan.js?v=dev";
+    import { normalizeLoan } from "./normalizeLoan.js?v=dev";
 
     import {
   normalizeOwnership,
   getUserOwnershipPct,
   isOwnedByUser,
   MARKET_USER
-} from "../js/ownershipEngine.js?v=dev";
+} from "./ownershipEngine.js?v=dev";
 
 
 /* =========================================================
@@ -2634,7 +2634,7 @@ function renderAndWirePage() {
     // IFRAME / REPORTING → redirect to full page
     if (PAGE_CONTEXT.isEmbed) {
       const url = new URL(
-        window.location.origin + "/loan-dashboard/amort/index.html"
+        window.location.origin + "/loanReporting/amort.html"
       );
       url.searchParams.set("user", PAGE_CONTEXT.user);
       url.searchParams.set("from", "reporting");
@@ -4946,7 +4946,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // =====================================================
 if (PAGE_CONTEXT.isEmbed) {
   const user = PAGE_CONTEXT.user;
-  const baseUrl = `/loan-dashboard/amort/index.html?user=${user}`;
+  const baseUrl = `/loanReporting/amort.html?user=${user}`;
 
   function redirectToFullPage() {
     let url = baseUrl;
@@ -4985,7 +4985,7 @@ if (PAGE_CONTEXT.isEmbed) {
     
 </script>
 
-<script src="/loan-dashboard/js/feedback.js"></script>
+<script src="/loanReporting/feedback.js?v=dev"></script>
 
   
 </body>
