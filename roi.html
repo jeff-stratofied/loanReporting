@@ -1170,19 +1170,19 @@ tr.event-default td {
        Script (organized with sections)
        ==================================== -->
   <script type="module">
-    import { buildAmortSchedule } from "../js/loanEngine.js?v=dev";
+    import { buildAmortSchedule } from "./loanEngine.js?v=dev";
     
     import {
       buildProjectedRoiTimeline,
   getRoiEntryAsOfMonth,
       computeKPIs,
       computeWeightedRoiAsOfMonth
-} from "../js/roiEngine.js?v=dev";
+} from "./roiEngine.js?v=dev";
 
 import {
   normalizeOwnership,
   getUserOwnershipPct
-} from "../js/ownershipEngine.js?v=dev";
+} from "./ownershipEngine.js?v=dev";
 
 
 
@@ -5123,7 +5123,7 @@ if (EMBED_MODE) {
 
       const user = PAGE_USER || "jeff";
       window.top.location.href =
-        `/loan-dashboard/roi/index.html?user=${user}&from=reporting&open=kpi2`;
+        `/loanReporting/roi.html?user=${user}&from=reporting&open=kpi2`;
     },
     { passive: true }
   );
@@ -5248,7 +5248,7 @@ const _OPEN_TARGET = _embedParams.get("open"); // Parse open param here
 if (_IS_EMBED) {
   const user = PAGE_USER || "jeff";
   const targetUrl =
-    `/loan-dashboard/roi/index.html?user=${user}&from=reporting&open=kpi2`;
+    `/loanReporting/roi.html?user=${user}&from=reporting&open=kpi2`;
 
   function redirectToFullROI(e) {
     e.preventDefault();
@@ -5496,7 +5496,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
-<script src="/loan-dashboard/js/feedback.js"></script>
+<script src="/loanReporting/feedback.js"></script>
 
     
 </body>
