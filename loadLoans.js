@@ -1,6 +1,6 @@
-// /loadLoans.js
+// loadLoans.js
 
-const API_URL = "https://loan-dashboard-api.jeff-263.workers.dev/loans";
+const API_URL = "https://loanReporting-api.jeff-263.workers.dev/loans";
 
 // ===============================
 // loadLoans.js  (API fetch only)
@@ -8,7 +8,7 @@ const API_URL = "https://loan-dashboard-api.jeff-263.workers.dev/loans";
 
 // Fetch loans from Cloudflare Worker
 export async function loadLoans() {
-  const url = "https://loan-dashboard-api.jeff-263.workers.dev/loans";
+  const url = "https://loanReporting-api.jeff-263.workers.dev/loans";
 
   try {
     const res = await fetch(url);
