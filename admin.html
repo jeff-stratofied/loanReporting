@@ -411,9 +411,9 @@ input:focus, select:focus {
      SCRIPT: FUNCTIONALITY (from working WrongColors version)
      ========================================================= -->
 <script type="module">
-  import { loadLoans } from "/loanReporting/loadLoans.js?v=dev";
+  import { loadLoans } from "/loanreporting/loadLoans.js?v=dev";
 
-  import { normalizeOwnership } from "/loanReporting/ownershipEngine.js?v=dev";
+  import { normalizeOwnership } from "/loanreporting/ownershipEngine.js?v=dev";
 
   const USER_OPTIONS = [
   { value: "jeff", label: "Jeff Customer" },
@@ -1076,7 +1076,7 @@ async function loadFromBackend() {
 
   try {
     const url =
-      "https://loan-dashboard-api.jeff-263.workers.dev/loans?t=" + Date.now();
+      "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
 
     const res = await fetch(url, { cache: "no-store" });
 
@@ -1184,7 +1184,7 @@ updated.forEach(loan => {
   // SAVE (only runs if validation passed)
   // =====================================================
   try {
-    const res = await fetch("https://loan-dashboard-api.jeff-263.workers.dev/loans", {
+    const res = await fetch("https://loantreporting-api.jeff-263.workers.dev/loans", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -1345,7 +1345,7 @@ if (action === "ownership") {
 
 </script>
 
-<script src="/loanReporting/feedback.js?v=dev"></script>
+<script src="/loanreporting/feedback.js?v=dev"></script>
   
 </body>
 </html>
