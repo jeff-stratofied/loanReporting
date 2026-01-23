@@ -394,7 +394,7 @@
             <a
   class="menu-item"
   id="homeNav"
-  href="/loanReporting/admin.html"
+  href="/loanreporting/admin.html"
 >
   <i class="fas fa-home"></i>
   <span class="menu-label">Home</span>
@@ -553,13 +553,13 @@ function buildFrames(user) {
   const v = Date.now(); // 🔒 force iframe reload
 
   document.getElementById("roiFrame").src =
-  `/loanReporting/roi.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
+  `/loanreporting/roi.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
 
   document.getElementById("earningsFrame").src =
-    `/loanReporting/earnings.html?user=${user}&embed=true&open=kpi2&v=${v}`;
+    `/loanreporting/earnings.html?user=${user}&embed=true&open=kpi2&v=${v}`;
 
   document.getElementById("amortFrame").src =
-    `/loanReporting/amort.html?user=${user}&embed=true&open=first&v=${v}`;
+    `/loanreporting/amort.html?user=${user}&embed=true&open=first&v=${v}`;
 }
 
 
@@ -606,11 +606,11 @@ function buildFrames(user) {
         // Wire redirects
         wireClickRedirect(
           "roiFrame",
-          "/loanReporting/roi.html",
+          "/loanreporting/roi.html",
           "rates"
         );
-        wireClickRedirect("earningsFrame", "/loanReporting/earnings.html","kpi2");
-        wireClickRedirect("amortFrame", "/loanReporting/amort.html", "first");
+        wireClickRedirect("earningsFrame", "/loanreporting/earnings.html","kpi2");
+        wireClickRedirect("amortFrame", "/loanreporting/amort.html", "first");
 
       
 // ===================================================
