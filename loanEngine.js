@@ -297,12 +297,6 @@ export function getCurrentScheduleIndex(loan, asOf = new Date()) {
     1
   );
 
-// ------------------------------------
-// Resolve user context for this loan
-// ------------------------------------
-const userId = resolveUserForLoan(loan);
-const user = userId ? USERS[userId] : null;
-
   
   const asOfMonth = new Date(
     asOf.getFullYear(),
@@ -412,16 +406,6 @@ const user =
     purchase.getMonth(),
     1
   );
-
-// ------------------------------------
-// Resolve user context (ENGINE OWNED)
-// ------------------------------------
-const userId = resolveUserForLoan(loan);
-
-const user =
-  (userId && typeof USERS === "object" && USERS[userId])
-    ? USERS[userId]
-    : { role: "investor", feeWaiver: "none" };
 
   
   // -------------------------------
