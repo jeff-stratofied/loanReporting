@@ -1086,7 +1086,7 @@ async function loadFromBackend() {
 
     const data = await res.json();   // ✅ THIS WAS MISSING
 
-    currentLoans = data.loans.map(normalizeLoan);
+    currentLoans = loans.map(normalizeLoan);
     currentSha = data.sha;
 
     renderTable();
