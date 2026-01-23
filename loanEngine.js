@@ -395,6 +395,17 @@ export function buildAmortSchedule(loan) {
     );
   }
 
+// ------------------------------------
+// Resolve user context (ENGINE OWNED)
+// ------------------------------------
+const userId = resolveUserForLoan(loan);
+
+const user =
+  (userId && typeof USERS === "object" && USERS[userId])
+    ? USERS[userId]
+    : { role: "investor", feeWaiver: "none" };
+
+  
   // Ownership always begins at the first of purchase month
   const purchaseMonth = new Date(
     purchase.getFullYear(),
