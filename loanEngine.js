@@ -402,6 +402,17 @@ export function buildAmortSchedule(loan) {
     1
   );
 
+// ------------------------------------
+// Resolve user context (ENGINE OWNED)
+// ------------------------------------
+const userId = resolveUserForLoan(loan);
+
+const user =
+  (userId && typeof USERS === "object" && USERS[userId])
+    ? USERS[userId]
+    : { role: "investor", feeWaiver: "none" };
+
+  
   // -------------------------------
   // Index PREPAYMENT events
   // -------------------------------
