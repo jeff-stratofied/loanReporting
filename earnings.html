@@ -1500,7 +1500,7 @@ if (cameFromReporting && backRow && backBtn) {
 
   backBtn.addEventListener("click", () => {
     window.location.href =
-      `/loanReporting/reporting?user=${PAGE_USER}`;
+      `/loanreporting/reporting?user=${PAGE_USER}`;
   });
 }
 
@@ -1540,7 +1540,7 @@ const TODAY = getStandardToday();
 // =====================================================
 function redirectToFullEarnings(openParam = "projected") {
   const url =
-    `/loanReporting/earnings.html` +
+    `/loanreporting/earnings.html` +
     `?user=${PAGE_USER}` +
     `&from=reporting` +
     (openParam ? `&open=${encodeURIComponent(openParam)}` : "");
@@ -2335,7 +2335,7 @@ document.querySelectorAll(".kpi").forEach(tile => {
     // ✅ IFRAME: always escape to full page, preserve which KPI was clicked
     if (isEmbed) {
       const url =
-        `/loanReporting/earnings.html` +
+        `/loanreporting/earnings.html` +
         `?user=${PAGE_USER}` +
         `&from=reporting` +
         `&open=${type}`;
@@ -4619,7 +4619,7 @@ async function initPage() {
       (e) => {
         if (e.target.closest("button, a")) return;
         window.top.location.href =
-          `/loanReporting/earnings.html?user=${PAGE_USER}&open=kpi2`;
+          `/loanreporting/earnings.html?user=${PAGE_USER}&open=kpi2`;
       },
       true
     );
@@ -6056,7 +6056,7 @@ window.addEventListener("popstate", (e) => {
   
   </script>
 
-<script src="/loanReporting/feedback.js"></script>
+<script src="/loanreporting/feedback.js"></script>
 
   
 </body>
