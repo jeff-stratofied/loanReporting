@@ -471,9 +471,9 @@ export function buildAmortSchedule(loan) {
       const applied = Math.min(balance, defaultRecovery);
       const isOwned = loanDate >= purchaseMonth;
 
+// Resolve waivers ONCE per row
 const { waiveSetup, waiveMonthly } =
   resolveFeeWaiverFlags(user, loan);
-
 
 const isFirstOwnedMonth =
   isOwned &&
@@ -483,9 +483,16 @@ const isFirstOwnedMonth =
 // 🔑 REAL user context
 const ownerIsLender = user?.role === "lender";
 
-// 🔑 User-level waiver overrides loan-level waiver
-const { waiveSetup, waiveMonthly } =
-  resolveFeeWaiverFlags(user, loan);
+let feeThisMonth = 0;
+
+if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+  feeThisMonth += SETUP_FEE_AMOUNT;
+}
+
+if (isOwned && !waiveMonthly) {
+  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+}
+
 
 let feeThisMonth = 0;
 
