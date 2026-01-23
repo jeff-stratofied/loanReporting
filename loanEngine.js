@@ -494,16 +494,6 @@ if (isOwned && !waiveMonthly) {
 }
 
 
-let feeThisMonth = 0;
-
-if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-  feeThisMonth += SETUP_FEE_AMOUNT;
-}
-
-if (isOwned && !waiveMonthly) {
-  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-}
-
 
       schedule.push(
         normalizeDeferralFlags({
