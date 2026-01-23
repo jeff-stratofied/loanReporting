@@ -1500,7 +1500,7 @@ if (cameFromReporting && backRow && backBtn) {
 
   backBtn.addEventListener("click", () => {
     window.location.href =
-      `/loan-dashboard/reporting?user=${PAGE_USER}`;
+      `/loanReporting/reporting?user=${PAGE_USER}`;
   });
 }
 
@@ -1923,7 +1923,7 @@ function getUserTotalPurchasePrice(loan, user) {
   
 async function loadLoansFromBackend() {
   try {
-    const res = await fetch("https://loan-dashboard-api.jeff-263.workers.dev/loans");
+    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
     const data = await res.json();
     const arr = data.loans || [];
 
