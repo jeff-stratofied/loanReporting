@@ -6,7 +6,7 @@ async function loadLoans(request, init) {
 
 async function handleFetch(request) {
   try {
-    const url = "https://raw.githubusercontent.com/jeff-stratofied/loan-dashboard/main/data/loans.json";
+    const url = "https://raw.githubusercontent.com/jeff-stratofied/loanReporting/main/data/loans.json";
 
     const res = await loadLoans(url);
       if (!res.ok) {
