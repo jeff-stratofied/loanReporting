@@ -1923,7 +1923,7 @@ function getUserTotalPurchasePrice(loan, user) {
   
 async function loadLoansFromBackend() {
   try {
-    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
+    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/");
     const data = await res.json();
     const arr = data.loans || [];
 
