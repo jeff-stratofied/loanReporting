@@ -498,6 +498,15 @@
 
   <script>
 
+import { loadPlatformConfig, PLATFORM_CONFIG }
+  from "/loanreporting/platformConfig.js";
+
+await loadPlatformConfig(CONFIG_URL);
+
+// read-only
+const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
+
+      
 // ===================================================
 // TEMP: Usage instrumentation (REMOVE AFTER PHASE 3)
 // ===================================================
