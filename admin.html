@@ -454,8 +454,18 @@ input:focus, select:focus {
 
   import { normalizeOwnership } from "/loanreporting/ownershipEngine.js?v=dev";
 
-  import { loadPlatformConfig, savePlatformConfig, PLATFORM_CONFIG } 
-  from "/loanreporting/platformConfig.json?v=dev";
+  import {
+  loadPlatformConfig,
+  savePlatformConfig,
+  PLATFORM_CONFIG
+} from "/loanreporting/platformConfig.js";
+
+await loadPlatformConfig(CONFIG_URL);
+
+// mutate + save
+PLATFORM_CONFIG.fees.setupFee = 200;
+await savePlatformConfig();
+
 
 
   const USER_OPTIONS = [
