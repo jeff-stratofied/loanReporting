@@ -373,12 +373,14 @@ input:focus, select:focus {
   <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
     <h3 style="margin-top:0">Platform Fees</h3>
 
-    <label class="sub">Setup Fee ($)</label>
-    <input id="cfg-setup-fee" type="number" step="1">
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center">
+  <div class="sub">Setup Fee</div>
+  <input id="cfg-setup-fee" type="number">
 
-    <label class="sub" style="margin-top:10px">Monthly Servicing Fee (bps)</label>
-    <input id="cfg-monthly-bps" type="number" step="1">
-  </div>
+  <div class="sub">Servicing (bps)</div>
+  <input id="cfg-monthly-bps" type="number">
+</div>
+
 
   <!-- USERS -->
   <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
@@ -1158,47 +1160,64 @@ Object.values(PLATFORM_CONFIG.users).forEach(u => {
 
   Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
     const row = document.createElement("div");
-    row.style.cssText = "padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px";
+    row.style.cssText = `
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:12px;
+  background:var(--card);
+`;
+
 
 row.innerHTML = `
-  <div style="font-weight:600">
-    ${u.name} <span style="color:var(--muted)">(${id})</span>
-  </div>
-
-  <div style="margin-top:6px">
-    Role:
-    <select data-user-role="${id}">
-      ${["customer","lender","investor","admin"].map(r =>
-        `<option ${u.role===r?"selected":""}>${r}</option>`
-      ).join("")}
-    </select>
-  </div>
-
-  <div style="margin-top:6px;font-size:0.8rem;color:var(--muted)">
-    Fee Policy:
-  </div>
-
+  <div style="
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-top:8px;
+">
   ${[
-    ["none", "No waiver"],
-    ["setup-only", "Waive setup fees"],
-    ["grace-only", "Waive setup + grace/deferral servicing"],
-    ["all", "Waive all fees"]
+    ["none", "No fees waived"],
+    ["setup-only", "Setup only"],
+    ["grace-only", "Setup + grace"],
+    ["all", "All fees"]
   ].map(([val,label]) => `
-    <label style="display:block;font-size:0.8rem">
+    <label style="
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:6px 8px;
+      font-size:0.75rem;
+      text-align:center;
+      cursor:pointer;
+      background:${u.feePolicy === val ? "var(--green)" : "transparent"};
+      color:${u.feePolicy === val ? "#fff" : "var(--text)"};
+    ">
       <input
         type="radio"
         name="fee-${id}"
         value="${val}"
-        ${u.feePolicy === val ? "checked" : ""}
         data-user-fee="${id}"
+        ${u.feePolicy === val ? "checked" : ""}
+        style="display:none"
       >
       ${label}
     </label>
   `).join("")}
+</div>
 
-  <button data-del="${id}" style="margin-top:6px">✕ Remove User</button>
-`;
-
+<button
+  data-del="${id}"
+  style="
+    margin-top:10px;
+    background:transparent;
+    border:none;
+    color:#ef4444;
+    font-size:0.7rem;
+    cursor:pointer;
+  "
+>
+  Remove user
+</button>
 
     list.appendChild(row);
   });
