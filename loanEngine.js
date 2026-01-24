@@ -99,26 +99,18 @@ export async function loadPlatformConfig(url) {
 
   const cfg = await res.json();
 
-  // Fees
-  GLOBAL_FEE_CONFIG = cfg.fees || {
-    setupFee: 150,
-    monthlyServicingBps: 25
-  };
+  GLOBAL_FEE_CONFIG = cfg.fees || {};
+  USERS = cfg.users || {};
 
-  // Users (map by id)
-  USERS = {};
-  (cfg.users || []).forEach(u => {
-    if (!u?.id) return;
-    USERS[u.id] = {
-      id: u.id,
-      name: u.name || u.id,
-      role: u.role || "investor",
-      feeWaiver: u.feeWaiver || "none",
-      active: u.active !== false
-    };
+  console.log("✅ Platform config loaded", {
+    fees: GLOBAL_FEE_CONFIG,
+    users: Object.keys(USERS)
   });
+}
 
-  return { fees: GLOBAL_FEE_CONFIG, users: USERS };
+// 🔑 Bridge module → global for legacy pages
+if (typeof window !== "undefined") {
+  window.loadPlatformConfig = loadPlatformConfig;
 }
 
 
