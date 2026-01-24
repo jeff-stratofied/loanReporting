@@ -64,5 +64,4 @@ export async function saveLoans(loans, sha) {
   return await res.json();  // includes content.sha
 }
 
-window.loadLoans = loadLoans;
 
