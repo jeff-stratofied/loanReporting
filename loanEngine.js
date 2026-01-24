@@ -28,30 +28,6 @@ function resolveUserForLoan(loan) {
   return loan.user || null;
 }
 
-// ------------------------------------
-// Canonical user registry (engine-owned)
-// ------------------------------------
-const USERS = {
-  jeff: {
-    id: "jeff",
-    role: "lender",        // or "investor"
-    feeWaiver: "none"      // "none" | "setup" | "monthly" | "all"
-  },
-
-  nick: {
-    id: "nick",
-    role: "investor",
-    feeWaiver: "none"
-  },
-
-  john: {
-    id: "john",
-    role: "investor",      // set to "lender" if applicable
-    feeWaiver: "none"
-  }
-};
-
-
 
 // -------------------------------
 //  Fees and Waivers
