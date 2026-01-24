@@ -1060,53 +1060,66 @@ function collectLoans() {
   const rows = document.querySelectorAll("#loan-table-body tr");
   const list = [];
 
+  const ALLOWED_FIELDS = new Set([
+    "loanName",
+    "school",
+    "loanStartDate",
+    "principal",
+    "rate",
+    "termYears",
+    "graceYears"
+  ]);
+
   rows.forEach(row => {
     const obj = {};
     const inputs = row.querySelectorAll("[data-field]");
 
-    const ALLOWED_FIELDS = new Set([
-  "loanName",
-  "school",
-  "loanStartDate",
-  "principal",
-  "rate",
-  "termYears",
-  "graceYears"
-]);
+    inputs.forEach(inp => {
+      const k = inp.dataset.field;
+      if (!ALLOWED_FIELDS.has(k)) return;
 
-inputs.forEach(inp => {
-  const k = inp.dataset.field;
-  if (!ALLOWED_FIELDS.has(k)) return;
+      let v;
 
-  if (k === "rate") {
-  v = Number(v) / 100; // convert % back to decimal
-} else if (["principal","termYears","graceYears"].includes(k)) {
-  v = Number(v);
-}
+      if (inp.type === "checkbox") {
+        v = inp.checked;
+      } else {
+        v = inp.value;
+      }
 
+      // ----------------------------
+      // Type normalization
+      // ----------------------------
+      if (k === "rate") {
+        v = Number(v) / 100; // UI % → decimal
+      } else if (["principal", "termYears", "graceYears"].includes(k)) {
+        v = Number(v);
+      }
 
-  obj[k] = v;
-});
-
+      obj[k] = v;
+    });
 
     const loanId = row.dataset.loanId;
     obj.loanId = loanId;
 
-    // ✅ PRESERVE EVENTS FROM CURRENT STATE
-    const existing = currentLoans.find(l => String(l.loanId) === String(loanId));
-    obj.events = Array.isArray(existing?.events) ? existing.events : [];
+    // ✅ PRESERVE EVENTS
+    const existing = currentLoans.find(
+      l => String(l.loanId) === String(loanId)
+    );
+    obj.events = Array.isArray(existing?.events)
+      ? structuredClone(existing.events)
+      : [];
 
-// 🔑 PRESERVE OWNERSHIP LOTS (CANONICAL)
-obj.ownershipLots = Array.isArray(existing?.ownershipLots)
-  ? structuredClone(existing.ownershipLots)
-  : [];
+    // ✅ PRESERVE OWNERSHIP LOTS (CANONICAL)
+    obj.ownershipLots = Array.isArray(existing?.ownershipLots)
+      ? structuredClone(existing.ownershipLots)
+      : [];
 
-    
     list.push(obj);
   });
 
   return list;
 }
+
 
 
 
