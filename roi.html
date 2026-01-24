@@ -1187,6 +1187,13 @@ import {
 import { loadPlatformConfig, PLATFORM_CONFIG }
   from "/loanreporting/platformConfig.js";
 
+// ===================================================
+// Platform Config location
+// ===================================================
+const CONFIG_URL =
+  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
+
+    
 await loadPlatformConfig(CONFIG_URL);
 
 // read-only
