@@ -464,14 +464,6 @@ input:focus, select:focus {
 const CONFIG_URL =
   "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
 
-  
-await loadPlatformConfig(CONFIG_URL);
-
-// mutate + save
-PLATFORM_CONFIG.fees.setupFee = 200;
-await savePlatformConfig();
-
-
 
   const USER_OPTIONS = [
   { value: "jeff", label: "Jeff Customer" },
@@ -1126,6 +1118,11 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
   "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
 );
 
+PLATFORM_CONFIG._saveEndpoint =
+  "https://loanreporting-api.jeff-263.workers.dev/config";
+
+PLATFORM_CONFIG._path = "data/platformConfig.json";
+  
 renderPlatformConfig();
 
   function renderPlatformConfig() {
