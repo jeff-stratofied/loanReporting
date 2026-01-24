@@ -1227,7 +1227,7 @@ async function loadFromBackend() {
 
 
 /* Save to Worker */
-async function saveToBackend() {
+window.saveToBackend = async function saveToBackend() {
   status.textContent = "Saving…";
 
   const updated = collectLoans();
