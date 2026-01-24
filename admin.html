@@ -1146,23 +1146,59 @@ renderPlatformConfig();
   document.getElementById("cfg-monthly-bps").value =
     PLATFORM_CONFIG.fees.monthlyServicingBps;
 
+    
   // Users
+Object.values(PLATFORM_CONFIG.users).forEach(u => {
+  if (!u.feePolicy) u.feePolicy = "none";
+});
+
+    
   const list = document.getElementById("user-list");
   list.innerHTML = "";
 
   Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
     const row = document.createElement("div");
-    row.style.cssText = "display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px";
+    row.style.cssText = "padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px";
 
-    row.innerHTML = `
-      <div>${u.name} <span style="color:var(--muted)">(${id})</span></div>
-      <select data-user="${id}">
-        ${["customer","lender","investor","admin"].map(r =>
-          `<option ${u.role===r?"selected":""}>${r}</option>`
-        ).join("")}
-      </select>
-      <button data-del="${id}">✕</button>
-    `;
+row.innerHTML = `
+  <div style="font-weight:600">
+    ${u.name} <span style="color:var(--muted)">(${id})</span>
+  </div>
+
+  <div style="margin-top:6px">
+    Role:
+    <select data-user-role="${id}">
+      ${["customer","lender","investor","admin"].map(r =>
+        `<option ${u.role===r?"selected":""}>${r}</option>`
+      ).join("")}
+    </select>
+  </div>
+
+  <div style="margin-top:6px;font-size:0.8rem;color:var(--muted)">
+    Fee Policy:
+  </div>
+
+  ${[
+    ["none", "No waiver"],
+    ["setup-only", "Waive setup fees"],
+    ["grace-only", "Waive setup + grace/deferral servicing"],
+    ["all", "Waive all fees"]
+  ].map(([val,label]) => `
+    <label style="display:block;font-size:0.8rem">
+      <input
+        type="radio"
+        name="fee-${id}"
+        value="${val}"
+        ${u.feePolicy === val ? "checked" : ""}
+        data-user-fee="${id}"
+      >
+      ${label}
+    </label>
+  `).join("")}
+
+  <button data-del="${id}" style="margin-top:6px">✕ Remove User</button>
+`;
+
 
     list.appendChild(row);
   });
@@ -1178,13 +1214,22 @@ document.getElementById("cfg-monthly-bps").onchange = e => {
   savePlatformConfig();
 };
 
-  document.getElementById("user-list").onclick = e => {
-  if (e.target.tagName === "SELECT") {
-    const id = e.target.dataset.user;
+document.getElementById("user-list").onclick = e => {
+  // Role change
+  if (e.target.dataset.userRole) {
+    const id = e.target.dataset.userRole;
     PLATFORM_CONFIG.users[id].role = e.target.value;
     savePlatformConfig();
   }
 
+  // Fee policy change
+  if (e.target.dataset.userFee) {
+    const id = e.target.dataset.userFee;
+    PLATFORM_CONFIG.users[id].feePolicy = e.target.value;
+    savePlatformConfig();
+  }
+
+  // Delete user
   if (e.target.dataset.del) {
     const id = e.target.dataset.del;
     if (!confirm(`Delete user ${id}?`)) return;
@@ -1193,6 +1238,7 @@ document.getElementById("cfg-monthly-bps").onchange = e => {
     renderPlatformConfig();
   }
 };
+
 
   document.getElementById("add-user-btn").onclick = () => {
   const id = document.getElementById("new-user-id").value.trim();
