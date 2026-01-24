@@ -553,15 +553,9 @@ let USER_LIST = [];     // array for dropdown
 
       
       
-      function getActiveUser() {
+function getActiveUser() {
   const params = new URLSearchParams(location.search);
-  let user = params.get("user");
-
-  if (!user || !USERS[user]) {
-    user = USER_LIST[0]?.id || "jeff"; // safe fallback
-  }
-
-  return user;
+  return params.get("user") || USER_LIST[0]?.id || "jeff";
 }
 
 
@@ -594,6 +588,10 @@ function setActiveUser(user) {
   await loadReportingUsers();
 
   populateUserDropdown();
+
+userSelect.addEventListener("change", e => {
+  setActiveUser(e.target.value);
+});
 
   const user = getActiveUser();
   updateDisplay(user);
