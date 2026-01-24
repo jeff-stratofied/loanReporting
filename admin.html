@@ -1161,7 +1161,7 @@ Object.values(PLATFORM_CONFIG.users).forEach(u => {
   Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
     const row = document.createElement("div");
     row.style.cssText = `
-  padding:12px 14px;
+  padding:10px 12px;
   border:1px solid var(--border);
   border-radius:12px;
   margin-bottom:12px;
@@ -1170,9 +1170,43 @@ Object.values(PLATFORM_CONFIG.users).forEach(u => {
 
 
 row.innerHTML = `
+<div style="
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+">
+  <div style="font-weight:600">
+    ${u.name}
+    <span style="color:var(--muted);font-weight:400">
+      (${id})
+    </span>
+  </div>
+
+  <select
+    data-user-role="${id}"
+    style="max-width:140px"
+  >
+    ${["customer","lender","investor","admin"].map(r =>
+      `<option ${u.role===r?"selected":""}>${r}</option>`
+    ).join("")}
+  </select>
+</div>
+
+<div style="
+  font-size:0.75rem;
+  color:var(--muted);
+  margin-bottom:4px;
+">
+  Fee policy for all loans owned by this user
+</div>
+
+  
   <div style="
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(4,auto);
+justify-content:start;
+
   gap:6px;
   margin-top:8px;
 ">
@@ -1185,8 +1219,8 @@ row.innerHTML = `
     <label style="
       border:1px solid var(--border);
       border-radius:8px;
-      padding:6px 8px;
-      font-size:0.75rem;
+      padding:5px 10px;
+      font-size:0.7rem;
       text-align:center;
       cursor:pointer;
       background:${u.feePolicy === val ? "var(--green)" : "transparent"};
@@ -1205,19 +1239,21 @@ row.innerHTML = `
   `).join("")}
 </div>
 
-<button
-  data-del="${id}"
-  style="
-    margin-top:10px;
-    background:transparent;
-    border:none;
-    color:#ef4444;
-    font-size:0.7rem;
-    cursor:pointer;
-  "
->
-  Remove user
-</button>
+<div style="text-align:right;margin-top:6px">
+  <button
+    data-del="${id}"
+    style="
+      background:transparent;
+      border:none;
+      color:#ef4444;
+      font-size:0.7rem;
+      cursor:pointer;
+    "
+  >
+    Remove user
+  </button>
+</div>
+
 `;
     
     list.appendChild(row);
