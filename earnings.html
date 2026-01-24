@@ -1325,9 +1325,7 @@ tr.row-hover {
   
 
 <script type="module">
-console.log("TOP OF EARNINGS MODULE");
 
-  
 import {
   buildEarningsSchedule,
   getCanonicalCurrentEarningsRow,
@@ -3947,13 +3945,6 @@ function openKpi3() {
     });
   }
 
-  if (window.EARNINGS_DEBUG) {
-    console.log("[KPI3 FINAL]", {
-      monthsCounted: avgRows.length,
-      avgMonthly: last?.avg,
-      netToDate: last?.netToDate
-    });
-  }
 
   openDrawer();
 }
@@ -4017,25 +4008,6 @@ function openKpi4() {
       netToDate: cumulativeNet
     });
 
-    // 🔍 Debug TODAY alignment
-    if (window.EARNINGS_DEBUG) {
-      const today = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
-      if (
-        row.date.getFullYear() === today.getFullYear() &&
-        row.date.getMonth() === today.getMonth()
-      ) {
-        console.log("[KPI4 DEBUG] TODAY (calendar-aligned)", {
-          date: row.date,
-          monthNet,
-          cumulativeNet,
-          avg: cumulativeNet / monthsElapsed,
-          byLoan: row.contributions.map(c => ({
-            loanId: c.loanId,
-            monthlyNet: c.monthlyNet
-          }))
-        });
-      }
-    }
   });
 
   // -----------------------------
@@ -4070,13 +4042,6 @@ function openKpi4() {
     .getElementById("drawerKpiTable")
     ?.classList.add("kpi4-table");
 
-  if (window.EARNINGS_DEBUG) {
-    console.log("[KPI4 FINAL]", {
-      monthsThroughMaturity: projectedRows.length,
-      avgProjectedMonthly: last?.avg,
-      netProjectedTotal: last?.netToDate
-    });
-  }
 
   openDrawer();
 }
@@ -4531,10 +4496,11 @@ function updateSortSelectFromTable(key, dir) {
   sortEl.value = `${base}_${dir === -1 ? "desc" : "asc"}`;
 }
 
-console.log("ABOUT TO DEFINE initPage");
-
 
 async function initPage() {
+console.log("🚀 initPage RUNNING");
+
+  
   // 1️⃣ Load platform config FIRST (fees, rules, defaults)
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
@@ -4653,8 +4619,6 @@ async function initPage() {
     );
   }
 }
-
-  console.log("DEFINED initPage");
 
 
 /* =========================
