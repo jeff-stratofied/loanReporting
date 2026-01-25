@@ -1287,26 +1287,17 @@ document.getElementById("user-list").addEventListener("change", e => {
   }
 });
 
-  document.getElementById("user-list").addEventListener("click", e => {
-  if (e.target.dataset.del) {
-    const id = e.target.dataset.del;
-    if (!confirm(`Delete user ${id}?`)) return;
-    delete PLATFORM_CONFIG.users[id];
-    markDirty();
-    renderPlatformConfig();
-  }
+document.getElementById("user-list").addEventListener("click", e => {
+  if (!e.target.dataset.del) return;
+
+  const id = e.target.dataset.del;
+  if (!confirm(`Delete user ${id}?`)) return;
+
+  delete PLATFORM_CONFIG.users[id];
+  markDirty();
+  renderPlatformConfig();
 });
 
-
-  // Delete user
-  if (e.target.dataset.del) {
-    const id = e.target.dataset.del;
-    if (!confirm(`Delete user ${id}?`)) return;
-    delete PLATFORM_CONFIG.users[id];
-    savePlatformConfig();
-    renderPlatformConfig();
-  }
-};
 
 
   document.getElementById("add-user-btn").onclick = () => {
