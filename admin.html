@@ -1137,10 +1137,6 @@ function collectLoans() {
 
   return list;
 }
-
-
-
-
   
     /* Load from Worker */
   const status = document.getElementById("status");
@@ -1149,10 +1145,6 @@ function collectLoans() {
   "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
 );
 
-PLATFORM_CONFIG._saveEndpoint =
-  "https://loanreporting-api.jeff-263.workers.dev/config";
-
-PLATFORM_CONFIG._path = "data/platformConfig.json";
   
 renderPlatformConfig();
 
@@ -1287,13 +1279,24 @@ document.getElementById("cfg-monthly-bps").onchange = e => {
 };
 
 
-document.getElementById("user-list").onclick = e => {
-  // Role change
+document.getElementById("user-list").addEventListener("change", e => {
   if (e.target.dataset.userRole) {
-  const id = e.target.dataset.userRole;
-  PLATFORM_CONFIG.users[id].role = e.target.value;
-  markDirty();
-}
+    const id = e.target.dataset.userRole;
+    PLATFORM_CONFIG.users[id].role = e.target.value;
+    markDirty();
+  }
+});
+
+  document.getElementById("user-list").addEventListener("click", e => {
+  if (e.target.dataset.del) {
+    const id = e.target.dataset.del;
+    if (!confirm(`Delete user ${id}?`)) return;
+    delete PLATFORM_CONFIG.users[id];
+    markDirty();
+    renderPlatformConfig();
+  }
+});
+
 
   // Delete user
   if (e.target.dataset.del) {
@@ -1397,10 +1400,13 @@ window.saveToBackend = async function saveToBackend() {
 
 
   document.getElementById("save-btn").onclick = async () => {
-  await savePlatformConfig();   // 🔑 save fees + users
-  await saveToBackend();        // save loans
-  clearDirty();                 // 🔑 clear warning + unload trap
+  status.textContent = "Saving…";
+  await savePlatformConfig();   // in-memory
+  await saveToBackend();        // loans
+  clearDirty();
+  status.textContent = "Saved ✔";
 };
+
 
 
   // =====================================================
