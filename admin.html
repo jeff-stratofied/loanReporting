@@ -366,7 +366,17 @@ input:focus, select:focus {
   <div id="status" class="pill">Idle</div>
   <button id="save-btn">💾 Save Changes</button>
 </div>
-
+<div
+  id="unsaved-warning"
+  style="
+    display:none;
+    margin-top:6px;
+    font-size:0.8rem;
+    color:#b91c1c;
+  "
+>
+  ⚠️ You have unsaved changes — click <strong>Save Changes</strong> to apply them
+</div>
 
 <!-- =========================================================
      PLATFORM CONFIG
@@ -426,23 +436,8 @@ input:focus, select:focus {
 
   
 <!-- =========================================================
-     TOP BUTTONS (ADD ROW + SAVE)
+     Add Loan 
      ========================================================= -->
-<div style="margin: 16px 0; display: flex; gap: 10px;">
-  <button id="save-btn">💾 Save Changes</button>
-</div>
-
-<div
-  id="unsaved-warning"
-  style="
-    display:none;
-    margin-top:6px;
-    font-size:0.8rem;
-    color:#b91c1c;
-  "
->
-  ⚠️ You have unsaved changes — click <strong>Save Changes</strong> to apply them
-</div>
 
   <div style="margin: 10px 0;">
   <button id="add-row">+ Add Loan</button>
