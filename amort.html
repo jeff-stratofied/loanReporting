@@ -1164,7 +1164,9 @@ import {
 } from "./ownershipEngine.js?v=dev";
 
     import { loadPlatformConfig, PLATFORM_CONFIG }
-  from "/loanreporting/platformConfig.js";
+  from "./platformConfig.js?v=dev";
+
+    import { isFeeWaived } from "./feePolicy.js?v=dev";
 
 // ===================================================
 // Platform Config location
@@ -3439,33 +3441,43 @@ function tpvSeries(loansList) {
 function tpvStackSeries(loansList) {
   const series = {}; // { "YYYY-MM": { loanId: value } }
 
-  loansList.forEach(loan => {
-    const loanId = loan.loanId ?? loan.id;
+loansList.forEach(loan => {
+  const loanId = loan.loanId ?? loan.id;
 
-    let cumPrincipal = 0;
-    let cumInterest  = 0;
-    let cumFees      = 0;
+  const owner =
+    PLATFORM_CONFIG.users?.[loan.ownerId] || {};
 
-    (loan.amort?.schedule || []).forEach(row => {
-      if (row.isOwned === false) return;
+  const waiveServicing =
+    isFeeWaived(owner, loan, "servicing");
 
+  let cumPrincipal = 0;
+  let cumInterest  = 0;
+  let cumFees      = 0;
 
-      const d = row.loanDate;
-      const key =
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  (loan.amort?.schedule || []).forEach(row => {
+    if (row.isOwned === false) return;
 
-      cumPrincipal += row.principalPaid || 0;
-      cumInterest  += row.interest || 0;
-      cumFees      += Number(row.feeThisMonth || 0);
+    const d = row.loanDate;
+    const key =
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-      const realized   = cumPrincipal + cumInterest - cumFees;
-      const unrealized = (row.balance || 0) * 0.95;
-      const loanValue  = realized + unrealized;
+    cumPrincipal += row.principalPaid || 0;
+    cumInterest  += row.interest || 0;
 
-      series[key] ??= {};
-      series[key][loanId] = loanValue;
-    });
+    // ✅ Apply fee waiver here
+    if (!waiveServicing) {
+      cumFees += Number(row.feeThisMonth || 0);
+    }
+
+    const realized   = cumPrincipal + cumInterest - cumFees;
+    const unrealized = (row.balance || 0) * 0.95;
+    const loanValue  = realized + unrealized;
+
+    series[key] ??= {};
+    series[key][loanId] = loanValue;
   });
+});
+
 
   return series;
 }
