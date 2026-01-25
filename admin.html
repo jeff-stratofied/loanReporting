@@ -1276,30 +1276,24 @@ ${[
 });
 
 
-  document.getElementById("cfg-setup-fee").onchange = e => {
+ document.getElementById("cfg-setup-fee").onchange = e => {
   PLATFORM_CONFIG.fees.setupFee = Number(e.target.value);
-  savePlatformConfig();
+  markDirty();
 };
 
 document.getElementById("cfg-monthly-bps").onchange = e => {
   PLATFORM_CONFIG.fees.monthlyServicingBps = Number(e.target.value);
-  savePlatformConfig();
+  markDirty();
 };
+
 
 document.getElementById("user-list").onclick = e => {
   // Role change
   if (e.target.dataset.userRole) {
-    const id = e.target.dataset.userRole;
-    PLATFORM_CONFIG.users[id].role = e.target.value;
-    savePlatformConfig();
-  }
-
-  // Fee policy change
-  if (e.target.dataset.userFee) {
-    const id = e.target.dataset.userFee;
-    PLATFORM_CONFIG.users[id].feePolicy = e.target.value;
-    savePlatformConfig();
-  }
+  const id = e.target.dataset.userRole;
+  PLATFORM_CONFIG.users[id].role = e.target.value;
+  markDirty();
+}
 
   // Delete user
   if (e.target.dataset.del) {
@@ -1320,10 +1314,10 @@ document.getElementById("user-list").onclick = e => {
   if (!id || !name) return alert("Missing user id or name");
   if (PLATFORM_CONFIG.users[id]) return alert("User already exists");
 
-  PLATFORM_CONFIG.users[id] = { name, role };
+  PLATFORM_CONFIG.users[id] = { name, role, feePolicy: "none" };
+markDirty();
+renderPlatformConfig();
 
-  savePlatformConfig();
-  renderPlatformConfig();
 };
 
 
@@ -1402,7 +1396,12 @@ window.saveToBackend = async function saveToBackend() {
 };
 
 
-  document.getElementById("save-btn").onclick = saveToBackend;
+  document.getElementById("save-btn").onclick = async () => {
+  await savePlatformConfig();   // 🔑 save fees + users
+  await saveToBackend();        // save loans
+  clearDirty();                 // 🔑 clear warning + unload trap
+};
+
 
   // =====================================================
 // GLOBAL DIRTY TRACKING FOR TABLE EDITS
