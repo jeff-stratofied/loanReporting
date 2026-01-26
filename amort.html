@@ -1380,6 +1380,7 @@ const ownedLoans = rawLoans.filter(l =>
   isOwnedByUser(l, PAGE_CONTEXT.user)
 );
 
+  console.log('Filtered owned loans count:', ownedLoans.length);
   
 // =========================================
 // 🔑 AMORT COMPATIBILITY FIX
