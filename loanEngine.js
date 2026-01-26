@@ -516,7 +516,6 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
       defaultMonthKey &&
       monthKeyFromDate(calendarDate) === defaultMonthKey
     ) {
-      // Wrap the body in { } to include all statements
       const loanDate = new Date(calendarDate);
       const applied = Math.min(balance, defaultRecovery);
       const isOwned = loanDate >= purchaseMonth;
