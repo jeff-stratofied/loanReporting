@@ -1476,6 +1476,7 @@ async function init() {
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
     );
+console.log('Config loaded:', GLOBAL_FEE_CONFIG, USERS);
   
   /* ---------------------------------------------------------
      DATA FREEZE POINT
@@ -1486,6 +1487,8 @@ async function init() {
      --------------------------------------------------------- */
   await loadLoans();
 
+console.log('Loans loaded:', allLoans);
+  
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
      ===================================================== */
