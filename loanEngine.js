@@ -554,7 +554,7 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
           contractualMonth: i + 1
         })
       );
-      break;
+      return schedule;
     }
 
     // ==============================
@@ -714,7 +714,7 @@ if (isOwned) {
     calendarDate = addMonths(calendarDate, 1);
     i++;
 
-    if (balance <= 0) break;
+    if (balance <= 0) return schedule;
   }
 
   // -------------------------------
