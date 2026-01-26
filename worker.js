@@ -1,4 +1,4 @@
-// worker.js (update in GitHub, then copy to Cloudflare dashboard)
+// worker.js — updated to use env bindings
 
 function corsHeaders() {
   return {
@@ -11,30 +11,48 @@ function corsHeaders() {
 function withCORS(res) {
   const headers = new Headers(res.headers);
   Object.entries(corsHeaders()).forEach(([k, v]) => headers.set(k, v));
-  headers.set("X-Debug-Worker", "platformConfig-v3");
+  headers.set("X-Debug-Worker", "platformConfig-v4");  // Bump for debugging
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
 
-const workerRequest = (...args) => globalThis.fetch(...args);
+const GITHUB_API_BASE = `https://api.github.com/repos`;
 
-const GITHUB_OWNER = "jeff-stratofied";
-const GITHUB_REPO = "loanreporting";
-const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents`;
+async function loadFromGitHub(env, path) {
+  const url = `${GITHUB_API_BASE}/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `token ${env.GITHUB_TOKEN}`,
+      'User-Agent': 'Cloudflare-Worker',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    cache: "no-store"
+  });
 
-// Helper to save JSON to GitHub (commits via Contents API)
-async function saveJsonToGitHub({ path, content, message, sha: providedSha }) {
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`GitHub GET failed for ${path}: ${res.status} - ${errText}`);
+  }
+
+  const data = await res.json();
+  const content = JSON.parse(atob(data.content));
+  return { content, sha: data.sha };
+}
+
+async function saveJsonToGitHub(env, { path, content, message, sha: providedSha }) {
+  const url = `${GITHUB_API_BASE}/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
   const headers = {
-    'Authorization': `token ${GITHUB_TOKEN}`, // From Cloudflare secret
-    'User-Agent': 'Cloudflare Worker',
-    'Content-Type': 'application/json'
+    'Authorization': `token ${env.GITHUB_TOKEN}`,
+    'User-Agent': 'Cloudflare-Worker',
+    'Content-Type': 'application/json',
+    'Accept': 'application/vnd.github.v3+json'
   };
 
-  // Fetch current SHA if not provided (for config; loans provide it)
   let currentSha = providedSha;
   if (!currentSha) {
-    const getRes = await workerRequest(`${GITHUB_API_BASE}/${path}`, { headers });
+    const getRes = await fetch(url, { headers });
     if (!getRes.ok) {
-      throw new Error(`Failed to get current file: ${getRes.status}`);
+      const errText = await getRes.text();
+      throw new Error(`GitHub HEAD/GET for SHA failed: ${getRes.status} - ${errText}`);
     }
     const getData = await getRes.json();
     currentSha = getData.sha;
@@ -42,11 +60,11 @@ async function saveJsonToGitHub({ path, content, message, sha: providedSha }) {
 
   const body = {
     message,
-    content: btoa(content), // Base64 encode
-    sha: currentSha // For optimistic locking (fails if mismatch)
+    content: btoa(content),
+    sha: currentSha
   };
 
-  const putRes = await workerRequest(`${GITHUB_API_BASE}/${path}`, {
+  const putRes = await fetch(url, {
     method: 'PUT',
     headers,
     body: JSON.stringify(body)
@@ -54,28 +72,17 @@ async function saveJsonToGitHub({ path, content, message, sha: providedSha }) {
 
   if (!putRes.ok) {
     const errText = await putRes.text();
-    throw new Error(`GitHub save failed: ${putRes.status} - ${errText}`);
+    throw new Error(`GitHub PUT failed for ${path}: ${putRes.status} - ${errText}`);
   }
 
   const putData = await putRes.json();
-  return new Response(JSON.stringify({ sha: putData.content.sha }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-}
-
-// Load from GitHub API (gets content + SHA)
-async function loadFromGitHub(path) {
-  const res = await workerRequest(`${GITHUB_API_BASE}/${path}`, {
-    headers: { 'Authorization': `token ${GITHUB_TOKEN}` },
-    cache: "no-store"
+  return new Response(JSON.stringify({ sha: putData.content.sha }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
   });
-  if (!res.ok) {
-    throw new Error(`GitHub fetch failed: ${res.status}`);
-  }
-  const data = await res.json();
-  const content = JSON.parse(atob(data.content));
-  return { content, sha: data.sha };
 }
 
-async function handleFetch(request, env) { // Add env param if needed for secrets (Cloudflare auto-injects)
+async function handleFetch(request, env) {
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders() });
   }
@@ -85,18 +92,18 @@ async function handleFetch(request, env) { // Add env param if needed for secret
 
     if (url.pathname === "/loans") {
       if (request.method === "GET") {
-        const { content, sha } = await loadFromGitHub("data/loans.json");
+        const { content, sha } = await loadFromGitHub(env, env.GITHUB_FILE_PATH || "data/loans.json");
         return withCORS(Response.json({ loans: content.loans || content, sha }));
       }
 
       if (request.method === "POST") {
         const body = await request.json();
-        const content = JSON.stringify({ loans: body.loans }, null, 2);
-        return withCORS(await saveJsonToGitHub({
-          path: "data/loans.json",
-          content,
-          message: "Update loans",
-          sha: body.sha // Client provides for locking
+        const contentStr = JSON.stringify({ loans: body.loans }, null, 2);
+        return withCORS(await saveJsonToGitHub(env, {
+          path: env.GITHUB_FILE_PATH || "data/loans.json",
+          content: contentStr,
+          message: "Update loans via admin",
+          sha: body.sha
         }));
       }
 
@@ -105,18 +112,18 @@ async function handleFetch(request, env) { // Add env param if needed for secret
 
     if (url.pathname === "/platformConfig") {
       if (request.method === "GET") {
-        const { content, sha } = await loadFromGitHub("data/platformConfig.json");
-        return withCORS(Response.json({ ...content, sha })); // Return SHA for future use
+        const { content, sha } = await loadFromGitHub(env, "data/platformConfig.json");  // Hardcoded for config; add var if needed
+        return withCORS(Response.json({ ...content, sha }));
       }
 
       if (request.method === "POST") {
         const body = await request.json();
-        const content = JSON.stringify(body, null, 2);
-        return withCORS(await saveJsonToGitHub({
+        const contentStr = JSON.stringify(body, null, 2);
+        return withCORS(await saveJsonToGitHub(env, {
           path: "data/platformConfig.json",
-          content,
-          message: "Update platform config"
-          // No sha provided; function fetches current
+          content: contentStr,
+          message: "Update platform config via admin"
+          // sha fetched inside saveJsonToGitHub if not provided
         }));
       }
 
@@ -125,8 +132,12 @@ async function handleFetch(request, env) { // Add env param if needed for secret
 
     return withCORS(new Response("Not found", { status: 404 }));
   } catch (err) {
-    return withCORS(new Response("Worker error: " + err.message, { status: 500 }));
+    console.error('Worker error:', err.message, err.stack);
+    return withCORS(new Response(
+      `Worker error: ${err.message}\nStack: ${err.stack || 'N/A'}`,
+      { status: 500 }
+    ));
   }
 }
 
-export default { fetch: (request, env) => handleFetch(request, env) }; // Env for secrets
+export default { fetch: handleFetch };
