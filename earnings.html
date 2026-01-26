@@ -1325,10 +1325,6 @@ tr.row-hover {
   
 
 <script type="module">
-
-let GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };  // Default object instead of null
-let USERS = {};  // Default empty users
-
 import {
   buildEarningsSchedule,
   getCanonicalCurrentEarningsRow,
@@ -1348,24 +1344,6 @@ import {
   normalizeOwnership,
   getUserOwnershipPct
 } from "./ownershipEngine.js?v=dev";
-
-  import { loadPlatformConfig, PLATFORM_CONFIG }
-  from "/loanreporting/platformConfig.js";
-
-// ===================================================
-// Platform Config location
-// ===================================================
-
-  
-  const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
-
-  
-await loadPlatformConfig(CONFIG_URL);
-
-// read-only
-const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
-
 
 
 let earningsDataReadyResolve;
@@ -1993,14 +1971,6 @@ function rebuildLoansWithEarnings() {
 loansWithEarnings = loans
   .map((raw, idx) => {
 
-// Debug: Log waiver info for this loan
-const userId = PAGE_USER;  // Since we're already scoping to current user
-const user = USERS[userId] || {};
-console.log(`Processing loan ${raw.id || raw.loanId || '(no id)'} (${raw.loanName || 'unnamed'})`);
-console.log(`  - Owner/User: ${userId || 'unassigned'}`);
-console.log(`  - User fee waiver: ${user.feeWaiver || user.feePolicy || 'none'}`);
-console.log(`  - Loan-specific fee waiver: ${raw.feeWaiver || 'none'}`);
-    
 const id = raw.id ?? (idx + 1);
 const loanId = raw.loanId ?? id;
 
@@ -2186,13 +2156,6 @@ const ownedEarningsSchedule = earningsScheduleRaw.map(r => {
       ? new Date(r.month + "-01T00:00:00")
       : null;
 
-  // Debug: Check if fees were waived this month
-  if (r.feeThisMonth === 0 && r.isOwned) {
-    console.log(`  → Month ${r.month || r.monthIndex || '?'} (${r.loanDate || r.date || 'unknown'}): Fees waived (feeThisMonth = 0)`);
-  } else if (r.feeThisMonth > 0 && r.isOwned) {
-    console.log(`  → Month ${r.month || r.monthIndex || '?'} (${r.loanDate || r.date || 'unknown'}): Fees charged $${Number(r.feeThisMonth).toFixed(2)}`);
-  }
-  
 return {
   ...r,
   loanDate,
@@ -3965,6 +3928,13 @@ function openKpi3() {
     });
   }
 
+  if (window.EARNINGS_DEBUG) {
+    console.log("[KPI3 FINAL]", {
+      monthsCounted: avgRows.length,
+      avgMonthly: last?.avg,
+      netToDate: last?.netToDate
+    });
+  }
 
   openDrawer();
 }
@@ -4028,6 +3998,25 @@ function openKpi4() {
       netToDate: cumulativeNet
     });
 
+    // 🔍 Debug TODAY alignment
+    if (window.EARNINGS_DEBUG) {
+      const today = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+      if (
+        row.date.getFullYear() === today.getFullYear() &&
+        row.date.getMonth() === today.getMonth()
+      ) {
+        console.log("[KPI4 DEBUG] TODAY (calendar-aligned)", {
+          date: row.date,
+          monthNet,
+          cumulativeNet,
+          avg: cumulativeNet / monthsElapsed,
+          byLoan: row.contributions.map(c => ({
+            loanId: c.loanId,
+            monthlyNet: c.monthlyNet
+          }))
+        });
+      }
+    }
   });
 
   // -----------------------------
@@ -4062,6 +4051,13 @@ function openKpi4() {
     .getElementById("drawerKpiTable")
     ?.classList.add("kpi4-table");
 
+  if (window.EARNINGS_DEBUG) {
+    console.log("[KPI4 FINAL]", {
+      monthsThroughMaturity: projectedRows.length,
+      avgProjectedMonthly: last?.avg,
+      netProjectedTotal: last?.netToDate
+    });
+  }
 
   openDrawer();
 }
@@ -4516,64 +4512,12 @@ function updateSortSelectFromTable(key, dir) {
   sortEl.value = `${base}_${dir === -1 ? "desc" : "asc"}`;
 }
 
-const getGlobalConfig = () => {
-  if (!window.GLOBAL_FEE_CONFIG) {
-    console.warn("GLOBAL_FEE_CONFIG not initialized — using default values");
-    window.GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
-  }
-  return window.GLOBAL_FEE_CONFIG;
-};
+
 
 async function initPage() {
-let fees;
-
-
-try {
-await loadPlatformConfig(
-"https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now()
-);
-console.log("Platform config loaded successfully from Worker");
-} catch (err) {
-console.error("Failed to load platform config from Worker:", err);
-
-
-try {
-await loadPlatformConfig(
-"https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
-);
-console.log("Platform config loaded from raw GitHub fallback");
-} catch (fallbackErr) {
-console.error("Fallback to raw GitHub also failed:", fallbackErr);
-
-
-// ✅ module-safe hard fallback
-window.GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
-window.USERS = {};
-console.warn("Using hard-coded default config (no user-specific waivers)");
-}
-}
-
-// 🔑 MUST be inside initPage
-fees = getGlobalConfig();
-
-console.log("Final fees in use:", fees);
-  
-// Debug: Always log current state after all attempts
-console.log("Platform config loaded:", GLOBAL_FEE_CONFIG);
-console.log("Users with waivers:", 
-  Object.entries(USERS).map(([id, u]) => ({
-    id,
-    name: u.name,
-    feeWaiver: u.feeWaiver || u.feePolicy || "none"
-  }))
-);
-
-  // 2️⃣ Load canonical loans from backend
+  // 1️⃣ Load + normalize data
   await loadLoansFromBackend();
-
-  // 3️⃣ Build derived earnings data
   rebuildLoansWithEarnings();
-
 
   PORTFOLIO_START = getPortfolioStartDate(loansWithEarnings);
 
@@ -5025,12 +4969,7 @@ drawerTitle.textContent =
 }
 
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initPage);
-} else {
-  initPage();
-}
-
+document.addEventListener("DOMContentLoaded", initPage);
 
 const themeToggleBtn = document.getElementById("themeToggle");
 const root = document.documentElement;
@@ -6111,10 +6050,10 @@ window.addEventListener("popstate", (e) => {
     default:
       openKpi2();
   }
-
-  
 });
 
+
+  
   </script>
 
 <script src="/loanreporting/feedback.js"></script>
