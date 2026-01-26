@@ -592,7 +592,9 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
       });
 
       // Fee calculation (no extra block)
-      const isOwned = loanDate >= purchaseMonth;
+const isOwned = loanDate >= purchaseMonth;
+const waivers = resolveFeeWaiverFlags(user, loan);
+const { waiveMonthly, waiveGraceMonthly } = waivers;
 let feeThisMonth = 0;
 if (isOwned) {
   const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // always deferred here
