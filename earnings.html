@@ -1988,6 +1988,14 @@ function rebuildLoansWithEarnings() {
 loansWithEarnings = loans
   .map((raw, idx) => {
 
+// Debug: Log waiver info for this loan
+const userId = PAGE_USER;  // Since we're already scoping to current user
+const user = USERS[userId] || {};
+console.log(`Processing loan ${raw.id || raw.loanId || '(no id)'} (${raw.loanName || 'unnamed'})`);
+console.log(`  - Owner/User: ${userId || 'unassigned'}`);
+console.log(`  - User fee waiver: ${user.feeWaiver || user.feePolicy || 'none'}`);
+console.log(`  - Loan-specific fee waiver: ${raw.feeWaiver || 'none'}`);
+    
 const id = raw.id ?? (idx + 1);
 const loanId = raw.loanId ?? id;
 
@@ -2173,6 +2181,13 @@ const ownedEarningsSchedule = earningsScheduleRaw.map(r => {
       ? new Date(r.month + "-01T00:00:00")
       : null;
 
+  // Debug: Check if fees were waived this month
+  if (r.feeThisMonth === 0 && r.isOwned) {
+    console.log(`  → Month ${r.month || r.monthIndex || '?'} (${r.loanDate || r.date || 'unknown'}): Fees waived (feeThisMonth = 0)`);
+  } else if (r.feeThisMonth > 0 && r.isOwned) {
+    console.log(`  → Month ${r.month || r.monthIndex || '?'} (${r.loanDate || r.date || 'unknown'}): Fees charged $${Number(r.feeThisMonth).toFixed(2)}`);
+  }
+  
 return {
   ...r,
   loanDate,
@@ -4502,8 +4517,18 @@ async function initPage() {
   
   // 1️⃣ Load platform config FIRST (fees, rules, defaults)
   await loadPlatformConfig(
-    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-  );
+  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
+);
+
+  // Debug: confirm config loaded correctly
+console.log("Platform config loaded:", GLOBAL_FEE_CONFIG);
+console.log("Users with waivers:", 
+  Object.entries(USERS).map(([id, u]) => ({
+    id,
+    name: u.name,
+    feeWaiver: u.feeWaiver || u.feePolicy || "none"
+  }))
+);
 
   // 2️⃣ Load canonical loans from backend
   await loadLoansFromBackend();
