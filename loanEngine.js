@@ -521,21 +521,22 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
       const isOwned = loanDate >= purchaseMonth;
 
       // Fee calculation (no extra block)
-      let feeThisMonth = 0;
-      if (isOwned) {
-        const isFirstOwnedMonth =
-          loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-          loanDate.getMonth() === purchaseMonth.getMonth();
-        const ownerIsLender = user?.role === "lender";
-        if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-          feeThisMonth += SETUP_FEE_AMOUNT;
-        }
-        // No monthly fee in terminal default month typically, but if policy allows charging:
-        const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // defaulted, not deferred
-        if (!shouldWaiveMonthly) {
-          feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-        }
-      }
+      const isOwned = loanDate >= purchaseMonth;
+let feeThisMonth = 0;
+if (isOwned) {
+  const isFirstOwnedMonth =
+    loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+    loanDate.getMonth() === purchaseMonth.getMonth();
+  const ownerIsLender = user?.role === "lender";
+  if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+    feeThisMonth += SETUP_FEE_AMOUNT;
+  }
+  // No monthly fee in terminal default month typically, but if policy allows charging:
+  const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && r.isDeferred);
+  if (!shouldWaiveMonthly) {
+    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+  }
+}
 
       schedule.push(
         normalizeDeferralFlags({
