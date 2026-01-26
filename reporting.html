@@ -496,24 +496,8 @@
 // 1. DOM REFERENCES & CONSTANTS
 // ===================================================
 
-  <script type="module">
+  <script>
 
-import { loadPlatformConfig, PLATFORM_CONFIG }
-  from "/loanreporting/platformConfig.js";
-
-// ===================================================
-// Platform Config location
-// ===================================================
-const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
-
-      
-await loadPlatformConfig(CONFIG_URL);
-
-// read-only
-const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
-
-      
 // ===================================================
 // TEMP: Usage instrumentation (REMOVE AFTER PHASE 3)
 // ===================================================
@@ -523,9 +507,11 @@ const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
         const userSelect = document.getElementById('userSelect');
         const currentUserDisplay = document.getElementById('currentUserDisplay');
 
-        let USERS = {};          // keyed by userId
-let USER_LIST = [];     // array for dropdown
-
+        const displayNames = {
+            "jeff": "Jeff Customer",
+            "nick": "Nick Lender",
+            "john": "John Investor"
+        };
 
     
 // ===================================================
@@ -540,64 +526,23 @@ let USER_LIST = [];     // array for dropdown
 // 3. USER STATE & URL MANAGEMENT
 // ===================================================
 
-    async function loadReportingUsers() {
-  const res = await fetch(
-    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-  );
-  if (!res.ok) throw new Error("Failed to load platform users");
+        function getActiveUser() {
+            const params = new URLSearchParams(location.search);
+            let user = params.get("user");
+            if (!user || !displayNames.hasOwnProperty(user)) user = "jeff"; // Default to Jeff Customer
+            return user;
+        }
 
-  const cfg = await res.json();
-  USERS = cfg.users || {};
-  USER_LIST = Object.values(USERS);
-}
+        function setActiveUser(user) {
+            const url = new URL(location.href);
+            url.searchParams.set("user", user);
+            history.replaceState({}, "", url);
+        }
 
-      
-      
-function getActiveUser() {
-  const params = new URLSearchParams(location.search);
-  return params.get("user") || USER_LIST[0]?.id || "jeff";
-}
-
-
-function setActiveUser(user) {
-  const url = new URL(location.href);
-  url.searchParams.set("user", user);
-  window.location.href = url.toString();
-}
-
-
-        function updateDisplay(user) {
-  currentUserDisplay.textContent =
-    USERS[user]?.name || user;
-
-  userSelect.value = user;
-}
-
-      function populateUserDropdown() {
-  userSelect.innerHTML = "";
-
-  USER_LIST.forEach(u => {
-    const opt = document.createElement("option");
-    opt.value = u.id;
-    opt.textContent = u.name || u.id;
-    userSelect.appendChild(opt);
-  });
-}
-
-      (async function initReporting() {
-  await loadReportingUsers();
-
-  populateUserDropdown();
-
-userSelect.addEventListener("change", e => {
-  setActiveUser(e.target.value);
-});
-
-  const user = getActiveUser();
-  updateDisplay(user);
-  buildFrames(user);
-})();
-
+        function updateDisplay(user) {      
+            currentUserDisplay.textContent = displayNames[user];
+            userSelect.value = user;
+        }
 
     
 // ===================================================
@@ -649,7 +594,14 @@ function buildFrames(user) {
             }
 
       
+// ===================================================
+// 6. PAGE INITIALIZATION
+// ===================================================
 
+       // Initial load - now defaults to Jeff Customer
+        let activeUser = getActiveUser();
+        updateDisplay(activeUser);
+        buildFrames(activeUser);
 
         // Wire redirects
         wireClickRedirect(
@@ -697,13 +649,6 @@ function buildFrames(user) {
       }
     });
 
-console.log("[REPORTING]", {
-  user: getActiveUser?.(),
-  allLoans: window.allLoans,
-  currentLoans: window.currentLoans
-});
-
-      
         
     </script>
 
