@@ -248,6 +248,12 @@ const purchaseDate = normalizeDate(
 
       // ✅ REQUIRED FOR PREPAYMENTS
       events: Array.isArray(l.events) ? l.events : []
+
+      // ✅ REQUIRED FOR OWNERSHIP FILTERING (this was missing)
+      ownershipLots: Array.isArray(l.ownershipLots) ? l.ownershipLots : [],
+      // Optional fallback fields (in case legacy loans use them)
+      owner: l.owner || null,
+      user: l.user || null
     };
   });
 }
