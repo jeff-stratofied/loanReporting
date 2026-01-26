@@ -15,26 +15,22 @@ export async function loadLoans() {
 
     if (!res.ok) {
       console.error("Fetch failed:", res.status, res.statusText);
-      return [];
+      return { loans: [], sha: null };
     }
 
     const data = await res.json();
 
     // Worker returns: { loans:[...], sha:"..." }
     if (Array.isArray(data.loans)) {
-      // expose sha for save flows / debugging
-  window.__LOANS_SHA__ = data.sha || null;
-
-  // ALWAYS return array
-  return data.loans;
-}
+      return data;        // <-- CORRECT
+    }
 
     console.warn("Unexpected API shape:", data);
-    return [];
+    return { loans: [], sha: null };
 
   } catch (err) {
     console.error("API error:", err);
-    return [];
+    return { loans: [], sha: null };
   }
 }
 
@@ -63,5 +59,3 @@ export async function saveLoans(loans, sha) {
 
   return await res.json();  // includes content.sha
 }
-
-
