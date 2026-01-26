@@ -128,6 +128,12 @@ export async function loadPlatformConfig(url) {
   GLOBAL_FEE_CONFIG = cfg.fees || {};
   USERS = cfg.users || {};
 
+  // 🔑 expose read-only globals for legacy pages
+  if (typeof window !== "undefined") {
+    window.GLOBAL_FEE_CONFIG = GLOBAL_FEE_CONFIG;
+    window.USERS = USERS;
+  }
+
   console.log("✅ Platform config loaded", {
     fees: GLOBAL_FEE_CONFIG,
     users: Object.keys(USERS)
