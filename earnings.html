@@ -4516,18 +4516,32 @@ async function initPage() {
 
   
   // 1️⃣ Load platform config FIRST (fees, rules, defaults)
-  try {
+  // Try Worker first (preferred, has SHA + CORS)
+try {
   await loadPlatformConfig(
     "https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now()
   );
+  console.log("Platform config loaded successfully from Worker");
 } catch (err) {
-  console.error("Failed to load platform config:", err);
-  // Fallback to defaults if needed
-  GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
-  USERS = {};
+  console.error("Failed to load platform config from Worker:", err);
+
+  // Fallback to raw GitHub (with cache-bust)
+  try {
+    await loadPlatformConfig(
+      "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
+    );
+    console.log("Platform config loaded from raw GitHub fallback");
+  } catch (fallbackErr) {
+    console.error("Fallback to raw GitHub also failed:", fallbackErr);
+
+    // Ultimate hard fallback to safe defaults
+    GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
+    USERS = {};
+    console.warn("Using hard-coded default config (no user-specific waivers)");
+  }
 }
 
-  // Debug: confirm config loaded correctly
+// Debug: Always log current state after all attempts
 console.log("Platform config loaded:", GLOBAL_FEE_CONFIG);
 console.log("Users with waivers:", 
   Object.entries(USERS).map(([id, u]) => ({
