@@ -1480,8 +1480,11 @@ async function init() {
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
     );
-  
-console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
+  console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
+
+  const rawLoans = await loadLoans();
+  console.log('Raw loans count:', rawLoans.length);  // ← Add this: should be ~30
+  console.log('Sample raw loan ownershipLots:', rawLoans[0]?.ownershipLots);  // ← Add this: should show array with user: "jeff" etc.
   
   /* ---------------------------------------------------------
      DATA FREEZE POINT
@@ -1495,12 +1498,17 @@ console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
   const currentUser = PAGE_CONTEXT.user;  // From query param ?user=jeff
 const userRole = USERS[currentUser]?.role || 'investor';  // Default to investor
 
+  console.log('User ID:', currentUser);  // ← Add this: should be 'jeff' lowercase
+
 // Placeholder: Filter visible loans based on role (expand as needed)
 currentLoans = currentLoans.filter(loan => {
   if (userRole === 'admin' || userRole === 'lender') return true;  // See all
   if (userRole === 'customer') return loan.visibleToCustomers;    // Hypothetical field—add to loans later
   return isOwnedByUser(loan, currentUser);  // Investor default: owned loans only
 });
+
+console.log('Owned loans count:', currentLoans.length);  // ← Add this: should be >0 (e.g., 10-20 for jeff)
+  console.log('Sample owned loan:', currentLoans[0]);  // ← Add this: should show a loan object with ownershipLots including "jeff"
   
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
