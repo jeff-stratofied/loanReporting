@@ -154,27 +154,22 @@ function monthKeyFromISO(iso) {
 // ===============================
 export async function loadLoans() {
   const raw = await fetchLoans();
-
   const items = Array.isArray(raw && raw.loans) ? raw.loans : [];
-
   return items.map((l, idx) => {
     const id = String(
       l.loanId !== undefined && l.loanId !== null
         ? l.loanId
         : (idx + 1)
     );
-
     // Normalize names
     const loanName =
       l.loanName ||
       l.name ||
       `Loan ${id}`;
-
     const school =
       l.school ||
       l.institution ||
       (loanName.includes(" ") ? loanName.split(" ")[0] : "School");
-
     // Normalize amounts
     const principal = Number(
       l.principal != null
@@ -187,7 +182,6 @@ export async function loadLoans() {
         ? l.purchasePrice
         : 0
     );
-
     const purchasePrice = Number(
       l.purchasePrice != null
         ? l.purchasePrice
@@ -195,7 +189,6 @@ export async function loadLoans() {
         ? l.buyPrice
         : principal
     );
-
     const nominalRate = Number(
       l.rate != null
         ? l.rate
@@ -203,17 +196,14 @@ export async function loadLoans() {
         ? l.nominalRate
         : 0
     );
-
     // Normalize dates
     const loanStartDate = normalizeDate(
-  l.loanStartDate || l.startDate || ""
-);
-
-const purchaseDate = normalizeDate(
-  l.purchaseDate || ""
-);
-
-    
+      l.loanStartDate || l.startDate || ""
+    );
+    const purchaseDate = normalizeDate(
+      l.purchaseDate || ""
+    );
+   
     // Normalize terms
     const termYears = Number(
       l.termYears != null
@@ -222,7 +212,6 @@ const purchaseDate = normalizeDate(
         ? l.term
         : 10
     );
-
     const graceYears = Number(
       l.graceYears != null
         ? l.graceYears
@@ -236,19 +225,15 @@ const purchaseDate = normalizeDate(
       loanName,
       name: loanName,
       school,
-
       loanStartDate,
       purchaseDate,
-
       principal,
       purchasePrice,
       nominalRate,
       termYears,
       graceYears,
-
       // ✅ REQUIRED FOR PREPAYMENTS
-      events: Array.isArray(l.events) ? l.events : []
-
+      events: Array.isArray(l.events) ? l.events : [],
       // ✅ REQUIRED FOR OWNERSHIP FILTERING (this was missing)
       ownershipLots: Array.isArray(l.ownershipLots) ? l.ownershipLots : [],
       // Optional fallback fields (in case legacy loans use them)
