@@ -710,7 +710,6 @@ if (isOwned) {
         contractualMonth: i + 1
       })
   );
-}
 
     calendarDate = addMonths(calendarDate, 1);
     i++;
