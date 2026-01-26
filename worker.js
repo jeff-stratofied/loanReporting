@@ -55,15 +55,16 @@ async function loadLoans() {
  * Main fetch handler
  */
 async function handleFetch(request) {
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders() });
+  }
+
   try {
     const url = new URL(request.url);
 
-    // =====================================================
-    // PLATFORM CONFIG API (GitHub-backed, like loans)
-    // =====================================================
     if (url.pathname === "/platformConfig") {
 
-      // GET platform config
       if (request.method === "GET") {
         const res = await fetch(
           "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json",
@@ -71,45 +72,45 @@ async function handleFetch(request) {
         );
 
         if (!res.ok) {
-          return new Response(
-            "Failed to load platform config",
-            { status: 500 }
+          return withCORS(
+            new Response("Failed to load platform config", { status: 500 })
           );
         }
 
-        return new Response(await res.text(), {
-          headers: { "Content-Type": "application/json" }
-        });
+        return withCORS(
+          new Response(await res.text(), {
+            headers: { "Content-Type": "application/json" }
+          })
+        );
       }
 
-      // POST platform config (ADMIN SAVE)
       if (request.method === "POST") {
         const body = await request.json();
 
-        // Reuse the SAME GitHub commit helper as loans
-        return await saveJsonToGitHub({
-          path: "data/platformConfig.json",
-          content: JSON.stringify(body, null, 2),
-          message: "Update platform config"
-        });
+        return withCORS(
+          await saveJsonToGitHub({
+            path: "data/platformConfig.json",
+            content: JSON.stringify(body, null, 2),
+            message: "Update platform config"
+          })
+        );
       }
 
-      return new Response("Method not allowed", { status: 405 });
+      return withCORS(
+        new Response("Method not allowed", { status: 405 })
+      );
     }
 
-    // =====================================================
-    // DEFAULT: LOANS API (unchanged)
-    // =====================================================
     const loans = await loadLoans();
-    return Response.json(loans);
+    return withCORS(Response.json(loans));
 
   } catch (err) {
-    return new Response(
-      "Worker error: " + err.message,
-      { status: 500 }
+    return withCORS(
+      new Response("Worker error: " + err.message, { status: 500 })
     );
   }
 }
+
 
 
 export default { fetch: handleFetch };
