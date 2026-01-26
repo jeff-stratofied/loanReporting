@@ -1326,8 +1326,8 @@ tr.row-hover {
 
 <script type="module">
 
-  let GLOBAL_FEE_CONFIG = null;  // Initialize to null to avoid undefined errors
-let USERS = {};  // Also init users
+let GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };  // Default object instead of null
+let USERS = {};  // Default empty users
 
 import {
   buildEarningsSchedule,
