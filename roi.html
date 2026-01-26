@@ -1184,20 +1184,6 @@ import {
   getUserOwnershipPct
 } from "./ownershipEngine.js?v=dev";
 
-import { loadPlatformConfig, PLATFORM_CONFIG }
-  from "/loanreporting/platformConfig.js";
-
-// ===================================================
-// Platform Config location
-// ===================================================
-const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
-
-    
-await loadPlatformConfig(CONFIG_URL);
-
-// read-only
-const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
 
 
 window.__closeDrawerTimer = null;
@@ -3641,14 +3627,7 @@ document.querySelectorAll(".kpi").forEach(kpi => {
   
     
 async function initROI() {
-  
-// 1️⃣ Load platform config FIRST
-  await loadPlatformConfig(
-    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-);
 
- await loadLoans();
-  
   const formatLoanLabel = (loan) =>
     `Loan ${loan.id} — ${loan.name} (${loan.school})`;
 
@@ -5497,11 +5476,9 @@ if (params.get("embed") === "true" && params.get("open")) {
       document.getElementById("currentDate").textContent =
   formatMonthYear(new Date());
 
-      
+      initROI();
 });
 
-    initROI();
-    
     
     // theme toggle
 window.addEventListener("DOMContentLoaded", () => {
