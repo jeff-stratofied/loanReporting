@@ -31,7 +31,7 @@ function resolveUserForLoan(loan) {
 // ------------------------------------
 // Canonical user registry (engine-owned)
 // ------------------------------------
-const USERS = {
+let USERS = {
   jeff: {
     id: "jeff",
     role: "lender",        // or "investor"
@@ -60,7 +60,6 @@ const USERS = {
 // Platform Configuration (GLOBAL)
 // ===============================
 let GLOBAL_FEE_CONFIG = null;
-let USERS = {};
 
 
 
