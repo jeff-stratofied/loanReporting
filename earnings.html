@@ -1337,6 +1337,9 @@ import {
   getPortfolioStartDate,
   getCurrentScheduleIndex,
   buildAmortSchedule,
+  loadLoans, 
+    attachSchedules, 
+    buildPortfolioViews,
   isDeferredMonth
 } from "./loanEngine.js?v=dev";
 
@@ -1923,26 +1926,25 @@ function getUserTotalPurchasePrice(loan, user) {
   
 async function loadLoansFromBackend() {
   try {
-    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
-    const data = await res.json();
-    const arr = data.loans || [];
+    // Use the shared, fully-normalized loader from loanEngine.js
+    // This gives you:
+    // - id / loanId fallbacks
+    // - loanName with fallback to "Loan ${id}"
+    // - school fallback logic
+    // - proper Number() conversion for principal, rate, terms
+    // - date parsing via normalizeDate
+    // - events & ownershipLots arrays guaranteed
+    const normalizedLoans = await loadLoans();   // ← this is the key line
 
-
-    // =========================================
-    // 🔑 LOAD LOANS (DO NOT MUTATE DATES HERE)
-    // =========================================
-    loans = arr.map(l => {
-      const loan = {
-        ...l
-      };
-
-      // =========================================
-      // NORMALIZE OWNERSHIP (REQUIRED)
-      // =========================================
+    // Still apply ownership normalization (required downstream)
+    normalizedLoans.forEach(loan => {
       normalizeOwnership(loan);
-
-      return loan;
     });
+
+    // Assign to the global that the rest of the page expects
+    loans = normalizedLoans;
+
+    console.log(`Loaded ${loans.length} fully normalized loans`);
 
   } catch (err) {
     console.error("Failed to load loans from backend", err);
@@ -4515,11 +4517,20 @@ function updateSortSelectFromTable(key, dir) {
 
 
 async function initPage() {
-  // 1️⃣ Load + normalize data
-  await loadLoansFromBackend();
+  // 1️⃣ Load + normalize data (updated)
+  await loadLoansFromBackend();                     // ← now normalized + scheduled
+
+  // Rebuild earnings-specific derived data (should now work better)
   rebuildLoansWithEarnings();
 
   PORTFOLIO_START = getPortfolioStartDate(loansWithEarnings);
+
+  // ── Defensive fallback for any lingering "MISSING" ──────────────────
+  loansWithEarnings = loansWithEarnings.map(loan => ({
+    ...loan,
+    name: loan.name || loan.loanName || `Loan ${loan.loanId || loan.id || '?'}`,
+    school: loan.school || 'Unknown School'
+  }));
 
   // 2️⃣ Compute KPIs
   let kpis = computePortfolioEarningsKPIs(
