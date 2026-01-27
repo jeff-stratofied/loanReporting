@@ -1146,6 +1146,9 @@ html[data-theme="dark"] .close-btn {
 
 
   <script type="module">
+console.log("🔥 amort.html script STARTED");
+window.__AMORT_DEBUG__ = { started: true };
+    
     import { loadLoans } from "./loadLoans.js?v=dev";
     
 import {
@@ -1478,6 +1481,9 @@ async function init() {
   /*
   1) LOAD + NORMALIZE DATA
   ---------------------------- */
+
+
+  
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
   );
@@ -1498,22 +1504,21 @@ async function init() {
      --------------------------------------------------------- */
   await loadLoans();
 
+console.log(
+  "🔍 ownershipLots sanity:",
+  rawLoans?.slice(0, 3).map(l => ({
+    id: l.id,
+    hasOwnershipLots: Array.isArray(l.ownershipLots),
+    ownershipLots: l.ownershipLots
+  }))
+);
+  
 const currentUser = PAGE_CONTEXT.user;
   const userRole = USERS[currentUser]?.role || 'investor';  // Default to investor
 
   console.log('User ID:', currentUser);  // Already there
 
-  /* delete
-  // Placeholder: Filter visible loans based on role (expand as needed)
-  currentLoans = currentLoans.filter(loan => {
-    if (userRole === 'admin' || userRole === 'lender') return true;  // See all
-    if (userRole === 'customer') return loan.visibleToCustomers;    // Hypothetical field—add to loans later
-    return isOwnedByUser(loan, currentUser);  // Investor default: owned loans only
-  });
-
-  console.log('Owned loans count:', currentLoans.length);  // Already there
-  console.log('Sample owned loan:', currentLoans[0]);  // Already there
-  */
+  
   
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
