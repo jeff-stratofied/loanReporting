@@ -1146,11 +1146,18 @@ html[data-theme="dark"] .close-btn {
 
 
   <script type="module">
+console.log("🔥 amort.html script STARTED");
+window.__AMORT_DEBUG__ = { started: true };
+    
     import { loadLoans } from "./loadLoans.js?v=dev";
+    
 import {
   attachSchedules,
   getCurrentScheduleIndex,
-  getCurrentLoanBalance
+  getCurrentLoanBalance,
+  loadPlatformConfig,
+  GLOBAL_FEE_CONFIG,
+  USERS
 } from "./loanEngine.js?v=dev";
 
 
@@ -1325,7 +1332,7 @@ if (CAME_FROM_REPORTING) {
     sessionStorage.removeItem("handledReportingEntry");
 
     window.location.href =
-      "/reporting?user=" + PAGE_CONTEXT.user;
+      "/loanreporting/reporting?user=" + PAGE_CONTEXT.user;
   });
 }
 
@@ -1355,116 +1362,156 @@ function clearOpenParamFromUrl() {
    ========================================================= */
   
 async function loadAndNormalizeLoans() {
+  console.log("📡 Calling loadLoans()...");
+
+  // --------------------------------------------------
+  // 1️⃣ LOAD (ONCE) + NORMALIZE SHAPE
+  // --------------------------------------------------
   const apiResult = await loadLoans();
 
-  // Support BOTH return shapes:
-  // 1) array (amort page)
-  // 2) { loans, sha } (admin / other pages)
-  const rawLoans = Array.isArray(apiResult)
+  const loanData = Array.isArray(apiResult)
     ? apiResult
-    : apiResult.loans;
+    : Array.isArray(apiResult?.loans)
+      ? apiResult.loans
+      : [];
 
-  // =========================================
-  // NORMALIZE OWNERSHIP (REQUIRED)
-  // =========================================
-  rawLoans.forEach(l => normalizeOwnership(l));
+  if (!loanData.length) {
+    console.error("❌ No loans after normalization", apiResult);
+    return [];
+  }
 
-// =========================================
-// 🔑 FILTER TO USER-OWNED LOANS ONLY
-// =========================================
-const ownedLoans = rawLoans.filter(l =>
-  isOwnedByUser(l, PAGE_CONTEXT.user)
-);
+  // --------------------------------------------------
+  // 2️⃣ ENSURE STABLE IDS
+  // --------------------------------------------------
+  loanData.forEach((loan, idx) => {
+    if (!loan.id) {
+      loan.id = loan.loanId || loan.externalId || `loan-${idx}`;
+    }
+  });
 
-  
-// =========================================
-// 🔑 AMORT COMPATIBILITY FIX
-// -----------------------------------------
-// Amort engine still requires loan.purchaseDate.
-// For partial ownership, derive it from earliest lot.
-// =========================================
-rawLoans.forEach(l => {
-  if (!l.purchaseDate) {
-    const lots = Array.isArray(l.ownershipLots) ? l.ownershipLots : [];
-    if (lots.length) {
-      const earliest = lots
-        .map(x => x.purchaseDate)
+  // --------------------------------------------------
+  // 3️⃣ NORMALIZE OWNERSHIP (REQUIRED)
+  // --------------------------------------------------
+  loanData.forEach(loan => normalizeOwnership(loan));
+
+  // --------------------------------------------------
+  // 4️⃣ AMORT COMPATIBILITY SHIM
+  // --------------------------------------------------
+  // Amort engine requires loan.purchaseDate.
+  // For partial ownership, derive from earliest lot.
+  loanData.forEach(loan => {
+    if (!loan.purchaseDate && Array.isArray(loan.ownershipLots)) {
+      const earliest = loan.ownershipLots
+        .map(lot => lot.purchaseDate)
         .filter(Boolean)
         .sort()[0];
 
       if (earliest) {
-        l.purchaseDate = earliest;
+        loan.purchaseDate = earliest;
+        loan.__derivedPurchaseDate = true;
       }
     }
-  }
-});
-
-// --------------------------------------------------
-// DEV-ONLY SCHEMA DRIFT GUARD (OWNERSHIP-AWARE)
-// --------------------------------------------------
-const DEV_MODE =
-  location.hostname === "localhost" ||
-  location.hostname.includes("github.io");
-
-if (DEV_MODE) {
-  rawLoans.forEach(l => {
-    const problems = [];
-
-    if (!Number.isFinite(l.principal)) problems.push("principal");
-    if (!Number.isFinite(l.termYears)) problems.push("termYears");
-    if (!l.loanStartDate) problems.push("loanStartDate");
-
-    // 🔑 Ownership invariants
-    if (!Array.isArray(l.ownershipLots) || !l.ownershipLots.length) {
-      problems.push("ownershipLots");
-    } else {
-      const sum = l.ownershipLots.reduce((s, lot) => s + (Number(lot.pct) || 0), 0);
-      if (Math.abs(sum - 1) > 0.0001) problems.push("ownershipLots ≠ 100%");
-
-      l.ownershipLots.forEach((lot, i) => {
-        if (!lot.user) problems.push(`lot[${i}].user`);
-        if (!lot.purchaseDate) problems.push(`lot[${i}].purchaseDate`);
-        if (!Number.isFinite(lot.pricePaid)) problems.push(`lot[${i}].pricePaid`);
-      });
-    }
-
-    if (problems.length) {
-      console.warn("⚠️ Loan schema issue", {
-        loanId: l.loanId,
-        loanName: l.loanName,
-        problems,
-        loan: l
-      });
-    }
   });
+
+  // --------------------------------------------------
+  // 5️⃣ DEV-ONLY SCHEMA DRIFT GUARD (OWNERSHIP-AWARE)
+  // --------------------------------------------------
+  const DEV_MODE =
+    location.hostname === "localhost" ||
+    location.hostname.includes("github.io");
+
+  if (DEV_MODE) {
+    loanData.forEach(l => {
+      const problems = [];
+
+      if (!Number.isFinite(l.principal)) problems.push("principal");
+      if (!Number.isFinite(l.termYears)) problems.push("termYears");
+      if (!l.loanStartDate) problems.push("loanStartDate");
+
+      // 🔑 Ownership invariants
+      if (!Array.isArray(l.ownershipLots) || !l.ownershipLots.length) {
+        problems.push("ownershipLots");
+      } else {
+        const sum = l.ownershipLots.reduce(
+          (s, lot) => s + (Number(lot.pct) || 0),
+          0
+        );
+
+        if (Math.abs(sum - 1) > 0.0001) {
+          problems.push("ownershipLots ≠ 100%");
+        }
+
+        l.ownershipLots.forEach((lot, i) => {
+          if (!lot.user) problems.push(`lot[${i}].user`);
+          if (!lot.purchaseDate) problems.push(`lot[${i}].purchaseDate`);
+          if (!Number.isFinite(lot.pricePaid)) problems.push(`lot[${i}].pricePaid`);
+        });
+      }
+
+      if (problems.length) {
+        console.warn("⚠️ Loan schema issue", {
+          loanId: l.id,
+          problems,
+          loan: l
+        });
+      }
+    });
+  }
+
+loanData.slice(0, 3).forEach(loan => {
+  console.log("🧪 ownership test", {
+    loanId: loan.id,
+    lots: loan.ownershipLots,
+    pctWithString: getUserOwnershipPct(loan, "jeff"),
+    pctViaIsOwned: isOwnedByUser(loan, USERS["jeff"])
+  });
+});
+  
+  // --------------------------------------------------
+  // 6️⃣ FILTER TO USER-OWNED LOANS ONLY
+  // --------------------------------------------------
+  console.log("👤 PAGE_CONTEXT.user:", PAGE_CONTEXT.user);
+  console.log("👥 USERS keys:", Object.keys(USERS || {}));
+
+  const currentUser = USERS?.[PAGE_CONTEXT.user];
+  if (!currentUser) {
+    console.error("❌ Current user not found", PAGE_CONTEXT.user);
+    return [];
+  }
+
+  const ownedLoans = loanData.filter(loan =>
+    isOwnedByUser(loan, currentUser)
+  );
+
+  console.log("✅ Owned loans count:", ownedLoans.length);
+
+  // --------------------------------------------------
+  // 7️⃣ DEBUG EXPOSURE
+  // --------------------------------------------------
+  window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+  window.__AMORT_DEBUG__.loanData = loanData;
+  window.__AMORT_DEBUG__.ownedLoans = ownedLoans;
+
+  return ownedLoans;
 }
 
+const ownedLoans = await loadAndNormalizeLoans();
+
+// amort enrichment
 const enrichedLoans = attachSchedules(
   ownedLoans.map(normalizeLoan)
 );
 
 allLoans = enrichedLoans.map(loan => ({
   ...loan,
-  // canonical schedules only
   cumSchedule: loan.amort.schedule
 }));
 
-
-
-// =========================================
-// MATERIALIZE CURRENT BALANCE (FOR SORTING)
-// =========================================
-
+// materialize balances (sorting / KPIs)
 const today = new Date();
-
 allLoans.forEach(loan => {
   loan.balance = getCurrentLoanBalance(loan, today);
 });
-
-  
-// FINALIZE — canonical sources
-currentLoans = [...allLoans];
-}
 
 
 async function init() {
@@ -4936,9 +4983,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         day: "numeric"
       })}`;
   }
-
+/* hide
   // Initialize page (runs exactly once)
   await init();
+*/
+
+  (async () => {
+  try {
+    console.log("🚀 init() starting");
+    await init();
+    console.log("✅ init() completed");
+  } catch (err) {
+    console.error("💥 init() FAILED", err);
+    window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+    window.__AMORT_DEBUG__.initError = err;
+  }
+})();
+
+  
 });
 
 // =====================================================
@@ -4946,7 +5008,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // =====================================================
 if (PAGE_CONTEXT.isEmbed) {
   const user = PAGE_CONTEXT.user;
-  const baseUrl = `/amort.html?user=${user}`;
+  const baseUrl = `/loanreporting/amort.html?user=${user}`;
 
   function redirectToFullPage() {
     let url = baseUrl;
@@ -4985,7 +5047,7 @@ if (PAGE_CONTEXT.isEmbed) {
     
 </script>
 
-<script src="/loanreporting/feedback.js"></script>
+<script src="/loanreporting/feedback.js?v=dev"></script>
 
   
 </body>
