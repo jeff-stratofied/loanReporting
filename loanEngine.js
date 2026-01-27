@@ -513,13 +513,7 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
 
 // Resolve waivers ONCE per row
 const { waiveSetup, waiveMonthly } =
-  resolveFeeWaiverFlags(user, loan);
-
-  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
-  waiveSetup,
-  waiveMonthly,
-  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
-});    
+  resolveFeeWaiverFlags(user, loan);    
 
 const isFirstOwnedMonth =
   isOwned &&
@@ -708,6 +702,22 @@ const isFirstOwnedMonth =
   const ownerIsLender = user?.role === "lender";
   const { waiveSetup, waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
+
+  const loanId = loan.loanName || loan.id || loan.id || "unknown";
+const debugOnceKey = `waiver-debug-${loanId}`;
+
+if (!window[debugOnceKey]) {
+  console.log(`DEBUG: resolveFeeWaiverFlags (normal month sample) for loan ${loanId}:`, {
+    waiveSetup,
+    waiveMonthly,
+    waiveAll,
+    effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none'),
+    firstOwnedMonth: isFirstOwnedMonth,
+    isOwned,
+    ownerRole: user?.role
+  });
+  window[debugOnceKey] = true;
+}
 
   let feeThisMonth = 0;
 
