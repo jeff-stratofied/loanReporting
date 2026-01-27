@@ -1362,204 +1362,163 @@ function clearOpenParamFromUrl() {
    ========================================================= */
   
 async function loadAndNormalizeLoans() {
- 
-  /* hide
+  console.log("📡 Calling loadLoans()...");
+
+  // --------------------------------------------------
+  // 1️⃣ LOAD (ONCE) + NORMALIZE SHAPE
+  // --------------------------------------------------
   const apiResult = await loadLoans();
-*/
 
-console.log("📡 Calling loadLoans()...");
-const loanData = await loadLoans();
-
-const apiResult = await loadLoans();
-
-const loanData = Array.isArray(apiResult)
-  ? apiResult
-  : apiResult?.loans || [];
-
-if (!loanData.length) {
-  console.error("❌ No loans after normalization", apiResult);
-  return;
-}
-
-loanData.forEach((loan, idx) => {
-  if (!loan.id) {
-    loan.id = loan.loanId || loan.externalId || `loan-${idx}`;
-  }
-});
-  
-console.log("📦 loadLoans() result:", {
-  exists: !!loanData,
-  type: typeof loanData,
-  isArray: Array.isArray(loanData),
-  keys: loanData && !Array.isArray(loanData) ? Object.keys(loanData) : null,
-  length: Array.isArray(loanData) ? loanData.length : null,
-  sample: Array.isArray(loanData) ? loanData[0] : loanData
-});
-
-window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
-window.__AMORT_DEBUG__.loanData = loanData;
-  
-  // Support BOTH return shapes:
-  // 1) array (amort page)
-  // 2) { loans, sha } (admin / other pages)
-  const rawLoans = Array.isArray(apiResult)
+  const loanData = Array.isArray(apiResult)
     ? apiResult
-    : apiResult.loans;
+    : Array.isArray(apiResult?.loans)
+      ? apiResult.loans
+      : [];
 
-  // =========================================
-  // NORMALIZE OWNERSHIP (REQUIRED)
-  // =========================================
-  rawLoans.forEach(l => normalizeOwnership(l));
-
-// =========================================
-// 🔑 FILTER TO USER-OWNED LOANS ONLY
-// =========================================
-
-  /* hide
-  const currentUser = USERS[PAGE_CONTEXT.user];
-
-const ownedLoans = rawLoans.filter(l =>
-  isOwnedByUser(l, currentUser)
-);
-*/
-
-console.log("👤 PAGE_CONTEXT.user:", PAGE_CONTEXT.user, typeof PAGE_CONTEXT.user);
-console.log("👥 USERS keys:", Object.keys(USERS || {}));
-
-const currentUser = USERS[PAGE_CONTEXT.user];
-
-const ownedLoans = loanData.filter(loan =>
-  isOwnedByUser(loan, currentUser)
-);
-
-console.log("✅ Owned loans count:", ownedLoans.length);
-
-  if (idx < 3) {
-    console.log("🏦 ownership debug", {
-      loanId: loan.id,
-      pct,
-      ownershipLots: loan.ownershipLots
-    });
+  if (!loanData.length) {
+    console.error("❌ No loans after normalization", apiResult);
+    return [];
   }
 
-  return pct > 0;
-});
+  // --------------------------------------------------
+  // 2️⃣ ENSURE STABLE IDS
+  // --------------------------------------------------
+  loanData.forEach((loan, idx) => {
+    if (!loan.id) {
+      loan.id = loan.loanId || loan.externalId || `loan-${idx}`;
+    }
+  });
 
-console.log("✅ Owned loans count:", ownedLoans.length);
+  // --------------------------------------------------
+  // 3️⃣ NORMALIZE OWNERSHIP (REQUIRED)
+  // --------------------------------------------------
+  loanData.forEach(loan => normalizeOwnership(loan));
 
-window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
-window.__AMORT_DEBUG__.ownedLoans = ownedLoans;
-  
-  console.log('Filtered owned loans count:', ownedLoans.length);
-  
-// =========================================
-// 🔑 AMORT COMPATIBILITY FIX
-// -----------------------------------------
-// Amort engine still requires loan.purchaseDate.
-// For partial ownership, derive it from earliest lot.
-// =========================================
-rawLoans.forEach(l => {
-  if (!l.purchaseDate) {
-    const lots = Array.isArray(l.ownershipLots) ? l.ownershipLots : [];
-    if (lots.length) {
-      const earliest = lots
-        .map(x => x.purchaseDate)
+  // --------------------------------------------------
+  // 4️⃣ AMORT COMPATIBILITY SHIM
+  // --------------------------------------------------
+  // Amort engine requires loan.purchaseDate.
+  // For partial ownership, derive from earliest lot.
+  loanData.forEach(loan => {
+    if (!loan.purchaseDate && Array.isArray(loan.ownershipLots)) {
+      const earliest = loan.ownershipLots
+        .map(lot => lot.purchaseDate)
         .filter(Boolean)
         .sort()[0];
 
       if (earliest) {
-        l.purchaseDate = earliest;
+        loan.purchaseDate = earliest;
+        loan.__derivedPurchaseDate = true;
       }
     }
-  }
-});
-
-// --------------------------------------------------
-// DEV-ONLY SCHEMA DRIFT GUARD (OWNERSHIP-AWARE)
-// --------------------------------------------------
-const DEV_MODE =
-  location.hostname === "localhost" ||
-  location.hostname.includes("github.io");
-
-if (DEV_MODE) {
-  rawLoans.forEach(l => {
-    const problems = [];
-
-    if (!Number.isFinite(l.principal)) problems.push("principal");
-    if (!Number.isFinite(l.termYears)) problems.push("termYears");
-    if (!l.loanStartDate) problems.push("loanStartDate");
-
-    // 🔑 Ownership invariants
-    if (!Array.isArray(l.ownershipLots) || !l.ownershipLots.length) {
-      problems.push("ownershipLots");
-    } else {
-      const sum = l.ownershipLots.reduce((s, lot) => s + (Number(lot.pct) || 0), 0);
-      if (Math.abs(sum - 1) > 0.0001) problems.push("ownershipLots ≠ 100%");
-
-      l.ownershipLots.forEach((lot, i) => {
-        if (!lot.user) problems.push(`lot[${i}].user`);
-        if (!lot.purchaseDate) problems.push(`lot[${i}].purchaseDate`);
-        if (!Number.isFinite(lot.pricePaid)) problems.push(`lot[${i}].pricePaid`);
-      });
-    }
-
-    if (problems.length) {
-      console.warn("⚠️ Loan schema issue", {
-        loanId: l.loanId,
-        loanName: l.loanName,
-        problems,
-        loan: l
-      });
-    }
   });
+
+  // --------------------------------------------------
+  // 5️⃣ DEV-ONLY SCHEMA DRIFT GUARD (OWNERSHIP-AWARE)
+  // --------------------------------------------------
+  const DEV_MODE =
+    location.hostname === "localhost" ||
+    location.hostname.includes("github.io");
+
+  if (DEV_MODE) {
+    loanData.forEach(l => {
+      const problems = [];
+
+      if (!Number.isFinite(l.principal)) problems.push("principal");
+      if (!Number.isFinite(l.termYears)) problems.push("termYears");
+      if (!l.loanStartDate) problems.push("loanStartDate");
+
+      // 🔑 Ownership invariants
+      if (!Array.isArray(l.ownershipLots) || !l.ownershipLots.length) {
+        problems.push("ownershipLots");
+      } else {
+        const sum = l.ownershipLots.reduce(
+          (s, lot) => s + (Number(lot.pct) || 0),
+          0
+        );
+
+        if (Math.abs(sum - 1) > 0.0001) {
+          problems.push("ownershipLots ≠ 100%");
+        }
+
+        l.ownershipLots.forEach((lot, i) => {
+          if (!lot.user) problems.push(`lot[${i}].user`);
+          if (!lot.purchaseDate) problems.push(`lot[${i}].purchaseDate`);
+          if (!Number.isFinite(lot.pricePaid)) problems.push(`lot[${i}].pricePaid`);
+        });
+      }
+
+      if (problems.length) {
+        console.warn("⚠️ Loan schema issue", {
+          loanId: l.id,
+          problems,
+          loan: l
+        });
+      }
+    });
+  }
+
+  // --------------------------------------------------
+  // 6️⃣ FILTER TO USER-OWNED LOANS ONLY
+  // --------------------------------------------------
+  console.log("👤 PAGE_CONTEXT.user:", PAGE_CONTEXT.user);
+  console.log("👥 USERS keys:", Object.keys(USERS || {}));
+
+  const currentUser = USERS?.[PAGE_CONTEXT.user];
+  if (!currentUser) {
+    console.error("❌ Current user not found", PAGE_CONTEXT.user);
+    return [];
+  }
+
+  const ownedLoans = loanData.filter(loan =>
+    isOwnedByUser(loan, currentUser)
+  );
+
+  console.log("✅ Owned loans count:", ownedLoans.length);
+
+  // --------------------------------------------------
+  // 7️⃣ DEBUG EXPOSURE
+  // --------------------------------------------------
+  window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+  window.__AMORT_DEBUG__.loanData = loanData;
+  window.__AMORT_DEBUG__.ownedLoans = ownedLoans;
+
+  return ownedLoans;
 }
 
+const ownedLoans = await loadAndNormalizeLoans();
+
+// amort enrichment
 const enrichedLoans = attachSchedules(
   ownedLoans.map(normalizeLoan)
 );
 
 allLoans = enrichedLoans.map(loan => ({
   ...loan,
-  // canonical schedules only
   cumSchedule: loan.amort.schedule
 }));
 
-
-
-// =========================================
-// MATERIALIZE CURRENT BALANCE (FOR SORTING)
-// =========================================
-
+// materialize balances (sorting / KPIs)
 const today = new Date();
-
 allLoans.forEach(loan => {
   loan.balance = getCurrentLoanBalance(loan, today);
 });
 
-  
-// FINALIZE — canonical sources
+// canonical sources
 currentLoans = [...allLoans];
-}
 
 
 async function init() {
   /*
   1) LOAD + NORMALIZE DATA
   ---------------------------- */
-
-
   
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
   );
   console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
-
-  /* hide
-  const loanData = await loadLoans();  // Returns { loans: array, sha: string } from worker
- */
   
   console.log("📡 Calling loadLoans()...");
-const loanData = await loadLoans();
 
 console.log("📦 loadLoans() result:", {
   exists: !!loanData,
@@ -1572,8 +1531,6 @@ console.log("📦 loadLoans() result:", {
 
 window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
 window.__AMORT_DEBUG__.loanData = loanData;
-  
-  const rawLoans = loanData.loans || [];  // Extract the array (fallback to [] on error)
 
   console.log('Raw loans count:', rawLoans.length);  // ← Updated: now counts the array
   console.log('Sample raw loan ownershipLots:', rawLoans[0]?.ownershipLots);  // ← Updated: accesses array[0]
@@ -1585,7 +1542,7 @@ window.__AMORT_DEBUG__.loanData = loanData;
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
-  await loadLoans();
+
 
 console.log(
   "🔍 ownershipLots sanity:",
