@@ -530,9 +530,12 @@ const isFirstOwnedMonth =
     loanDate.getMonth() === purchaseMonth.getMonth();
 
   const ownerIsLender = user?.role === "lender";
+
+  /* delete
   const { waiveSetup, waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
-
+*/
+  
   let feeThisMonth = 0;
 
   if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
