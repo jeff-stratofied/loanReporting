@@ -511,16 +511,13 @@ if (
   const isOwned = loanDate >= purchaseMonth;
 
   // Resolve waivers ONCE per row (only once)
-  const { waiveSetup, waiveMonthlyDuringGrace, waiveAll } = resolveFeeWaiverFlags(user, loan);
+  const { waiveSetup, waiveMonthly } = resolveFeeWaiverFlags(user, loan);
 
-  // Debug log (keep for now, remove later)
-// Only log once per loan
-if (!window.__loggedLoans) window.__loggedLoans = new Set();
-const loanId = loan.loanName || loan.id;
-if (!window.__loggedLoans.has(loanId)) {
-  console.log('DEBUG: resolveFeeWaiverFlags (first call) for loan', loanId, /* ... */);
-  window.__loggedLoans.add(loanId);
-}
+console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
+  waiveSetup,
+  waiveMonthly,
+  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
+});
 
   const isFirstOwnedMonth =
     isOwned &&
