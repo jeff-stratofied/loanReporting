@@ -1513,9 +1513,6 @@ allLoans.forEach(loan => {
   loan.balance = getCurrentLoanBalance(loan, today);
 });
 
-// canonical sources
-currentLoans = [...allLoans];
-
 
 async function init() {
   /*
@@ -1551,7 +1548,7 @@ window.__AMORT_DEBUG__.loanData = loanData;
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
-
+currentLoans = [...allLoans];
 
 console.log(
   "🔍 ownershipLots sanity:",
