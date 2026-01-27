@@ -370,6 +370,8 @@ function normalizeDate(d) {
 
 export function buildAmortSchedule(loan) {
 
+  console.log(`buildAmortSchedule called for ${loan.loanName || loan.id || "unknown"} (call #${(window.amortCallCount = (window.amortCallCount || 0) + 1)})`);
+
   const {
     principal,
     nominalRate,
