@@ -1051,8 +1051,10 @@ loansWithAmort.forEach(loan => {
 
       balance: r.balance
     };
-  });
 
+console.log(`DEBUG: Processing loan in buildPortfolioViews: ${loan.loanName || loan.id || "unknown"}`);
+console.log(`DEBUG: Waiver check - loanName: "${loan.loanName || ""}", matches any? ${waivedLoanNames.some(name => (loan.loanName || "").includes(name))}`);
+  
 // ──────────────────────────────────────────────────────────────
     // TEMP: Earnings impact check for waived loans
     // ──────────────────────────────────────────────────────────────
@@ -1073,6 +1075,10 @@ loansWithAmort.forEach(loan => {
       });
     }
     // ──────────────────────────────────────────────────────────────
+    
+  });
+
+
   
 // -------------------------------------------------
 // DISPLAY timeline (INVESTOR VIEW — starts at first owned month)
