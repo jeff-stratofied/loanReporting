@@ -710,7 +710,6 @@ if (!window[debugOnceKey]) {
   console.log(`DEBUG: resolveFeeWaiverFlags (normal month sample) for loan ${loanId}:`, {
     waiveSetup,
     waiveMonthly,
-    waiveAll,
     effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none'),
     firstOwnedMonth: isFirstOwnedMonth,
     isOwned,
