@@ -1370,6 +1370,23 @@ async function loadAndNormalizeLoans() {
 console.log("📡 Calling loadLoans()...");
 const loanData = await loadLoans();
 
+const apiResult = await loadLoans();
+
+const loanData = Array.isArray(apiResult)
+  ? apiResult
+  : apiResult?.loans || [];
+
+if (!loanData.length) {
+  console.error("❌ No loans after normalization", apiResult);
+  return;
+}
+
+loanData.forEach((loan, idx) => {
+  if (!loan.id) {
+    loan.id = loan.loanId || loan.externalId || `loan-${idx}`;
+  }
+});
+  
 console.log("📦 loadLoans() result:", {
   exists: !!loanData,
   type: typeof loanData,
@@ -1409,24 +1426,13 @@ const ownedLoans = rawLoans.filter(l =>
 console.log("👤 PAGE_CONTEXT.user:", PAGE_CONTEXT.user, typeof PAGE_CONTEXT.user);
 console.log("👥 USERS keys:", Object.keys(USERS || {}));
 
-const currentUser =
-  typeof PAGE_CONTEXT.user === "string"
-    ? USERS?.[PAGE_CONTEXT.user]
-    : PAGE_CONTEXT.user;
+const currentUser = USERS[PAGE_CONTEXT.user];
 
-console.log("👤 Resolved currentUser:", currentUser);
+const ownedLoans = loanData.filter(loan =>
+  isOwnedByUser(loan, currentUser)
+);
 
-const ownedLoans = loanData.filter((loan, idx) => {
-  let pct;
-  try {
-    pct = getUserOwnershipPct(loan, currentUser);
-  } catch (e) {
-    console.error("❌ getUserOwnershipPct threw", {
-      loanId: loan?.id,
-      error: e
-    });
-    return false;
-  }
+console.log("✅ Owned loans count:", ownedLoans.length);
 
   if (idx < 3) {
     console.log("🏦 ownership debug", {
