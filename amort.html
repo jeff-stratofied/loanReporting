@@ -2634,7 +2634,7 @@ function renderAndWirePage() {
     // IFRAME / REPORTING → redirect to full page
     if (PAGE_CONTEXT.isEmbed) {
       const url = new URL(
-        window.location.origin + "/amort.html"
+        window.location.origin + "/loanreporting/amort.html"
       );
       url.searchParams.set("user", PAGE_CONTEXT.user);
       url.searchParams.set("from", "reporting");
