@@ -59,14 +59,14 @@
         {
           "user": "jeff",
           "pct": 0.5,
-          "pricePaid": "3500",
+          "pricePaid": "3750",
           "purchaseDate": "2024-02-01"
         },
         {
           "user": "john",
           "pct": 0.5,
           "purchaseDate": "2025-01-08",
-          "pricePaid": "3500"
+          "pricePaid": "3750"
         }
       ]
     },
