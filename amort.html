@@ -1550,6 +1550,11 @@ window.__AMORT_DEBUG__.loanData = loanData;
      --------------------------------------------------------- */
 currentLoans = [...allLoans];
 
+console.log("🧱 currentLoans ready", {
+count: currentLoans.length,
+sample: currentLoans[0]
+});
+  
 console.log(
   "🔍 ownershipLots sanity:",
   rawLoans?.slice(0, 3).map(l => ({
