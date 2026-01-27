@@ -426,7 +426,7 @@ const user =
     : { role: "investor", feeWaiver: "none" };
 
 
-  / ──────────────────────────────────────────────────────────────
+ // ──────────────────────────────────────────────────────────────
 // TEMPORARY FEE WAIVER TESTING BLOCK - REMOVE AFTER CONFIRMATION
 // ──────────────────────────────────────────────────────────────
 const loanName = loan.loanName || loan.id || "unknown";
