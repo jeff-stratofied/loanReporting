@@ -1163,6 +1163,9 @@ import {
   MARKET_USER
 } from "./ownershipEngine.js?v=dev";
 
+import { loadPlatformConfig, PLATFORM_CONFIG } from './platformConfig.js?v=dev';
+import { buildPortfolioViews } from './loanEngine.js?v=dev';
+    
 
 /* =========================================================
    A. PAGE CONTEXT & ROUTING
@@ -1170,7 +1173,16 @@ import {
 /* =========================================================
    PAGE CONTEXT (single source of truth)
    ========================================================= */
+// Load platform config (stable fallback)
+await loadPlatformConfig('/loanreporting/platformConfig.json');  // Adjust path if needed
+const PLATFORM_CONFIG_FALLBACK = {
+  fees: { setupFee: 150, monthlyServicingBps: 25 },
+  users: {}
+};
+const PLATFORM_CONFIG = PLATFORM_CONFIG || PLATFORM_CONFIG_FALLBACK;
 
+
+    
 const PAGE_CONTEXT = (() => {
   const params = new URLSearchParams(window.location.search);
 
@@ -1468,154 +1480,162 @@ currentLoans = [...allLoans];
 
 
 async function init() {
-  /* =====================================================
-     1) LOAD + NORMALIZE DATA
-     ===================================================== */
-
-  /* ---------------------------------------------------------
-     DATA FREEZE POINT
-     After this line:
-     - allLoans
-     - currentLoans
-     MUST NOT be mutated
-     --------------------------------------------------------- */
-  await loadAndNormalizeLoans();
-
-  /* =====================================================
-     2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
-     ===================================================== */
-
-  window.KPI_COLOR_MAP = {};
-
-  const BASE_DISTINCT_COLORS = [
-    "#2563eb", // blue
-    "#dc2626", // red
-    "#16a34a", // green
-    "#7c3aed", // purple
-    "#ea580c", // orange
-    "#0891b2", // cyan
-    "#ca8a04", // amber
-    "#be185d", // rose
-    "#15803d", // dark green
-    "#1d4ed8", // deep blue
-    "#9333ea", // violet
-    "#b91c1c"  // dark red
-  ];
-
-  const sortedLoansForColors = allLoans
-    .slice()
-    .sort((a, b) => (a.loanId ?? a.id) - (b.loanId ?? b.id));
-
-  sortedLoansForColors.forEach((loan, i) => {
-    const id = loan.loanId ?? loan.id;
-    window.KPI_COLOR_MAP[id] =
-      BASE_DISTINCT_COLORS[i % BASE_DISTINCT_COLORS.length];
-  });
-
-  /* =====================================================
-     3) RENDER + WIRE UI (MUST HAPPEN AFTER DATA)
-     ===================================================== */
-
-  renderAndWirePage();
-
-// ===============================
-// SINGLE ENTRY HANDLER (AUTHORITATIVE)
-// ===============================
-
-const KPI_KEYS = new Set(["tpv", "rates", "payments", "distribution"]);
-
-function openLoanDrawerSafe(loan) {
-  if (!loan) return;
-  requestAnimationFrame(() => {
-    openDrawerForLoan(loan);
-    drawer.classList.add("open");
-    drawer.setAttribute("aria-hidden", "false");
-  });
-}
-
-function openKpiDrawerSafe(key) {
-  if (!key) return;
-
-  ENTRY_HANDLED = true;          // 🔑 latch intent
-  currentMode = "kpi";
-
-  openDrawerForKPI();
-
-  if (key === "tpv") return renderTPVDrawer();
-  if (key === "rates") return renderRatesDrawer();
-  if (key === "payments") return renderPaymentsDrawer();
-  if (key === "distribution") return renderDistributionDrawer();
-}
-
-
-(function handleEntry() {
-  // 1) REPORTING ENTRY — STATELESS
-  // Tiles view always, BUT honor open= if present
-if (PAGE_CONTEXT.cameFromReporting && !HAS_HANDLED_REPORTING_ENTRY) {
-  
-
-  // KPI deep-link from Reporting
-  if (KPI_KEYS.has(PAGE_CONTEXT.open)) {
-    openKpiDrawerSafe(PAGE_CONTEXT.open);
-    clearOpenParamFromUrl();
-    sessionStorage.setItem("handledReportingEntry", "true");
-    return;
-  }
-
-  // Explicit loan from Reporting
-  if (PAGE_CONTEXT.open === "loan" && PAGE_CONTEXT.loanId) {
-    const loan = currentLoans.find(
-      l => (l.loanId ?? l.id) === PAGE_CONTEXT.loanId
-    );
-    if (loan) {
-      openLoanDrawerSafe(loan);
-      clearOpenParamFromUrl();
-      sessionStorage.setItem("handledReportingEntry", "true");
-      return;
+  try {
+    /* =====================================================
+       0) LOAD PLATFORM CONFIG (early, for fees/roles later)
+       ===================================================== */
+    try {
+      await loadPlatformConfig('/loanreporting/platformConfig.json');  // adjust path if needed
+    } catch (configErr) {
+      console.warn("Platform config load failed, using defaults:", configErr);
+      // Fallback defaults (matches your current behavior)
+      window.PLATFORM_CONFIG = {
+        fees: { setupFee: 150, monthlyServicingBps: 25 },
+        users: {}
+      };
     }
-  }
 
-  // Default first loan ONLY on first entry
-  if (currentLoans.length) {
-    openLoanDrawerSafe(currentLoans[0]);
-  }
+    /* =====================================================
+       1) LOAD + NORMALIZE DATA
+       ===================================================== */
+    /* ---------------------------------------------------------
+       DATA FREEZE POINT
+       After this line:
+       - allLoans
+       - currentLoans
+       MUST NOT be mutated
+       --------------------------------------------------------- */
+    await loadAndNormalizeLoans();
 
-  clearOpenParamFromUrl();
-  sessionStorage.setItem("handledReportingEntry", "true");
-  return;
-}
+    /* =====================================================
+       2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
+       ===================================================== */
+    window.KPI_COLOR_MAP = {};
+    const BASE_DISTINCT_COLORS = [
+      "#2563eb", // blue
+      "#dc2626", // red
+      "#16a34a", // green
+      "#7c3aed", // purple
+      "#ea580c", // orange
+      "#0891b2", // cyan
+      "#ca8a04", // amber
+      "#be185d", // rose
+      "#15803d", // dark green
+      "#1d4ed8", // deep blue
+      "#9333ea", // violet
+      "#b91c1c" // dark red
+    ];
+    const sortedLoansForColors = allLoans
+      .slice()
+      .sort((a, b) => (a.loanId ?? a.id) - (b.loanId ?? b.id));
+    sortedLoansForColors.forEach((loan, i) => {
+      const id = loan.loanId ?? loan.id;
+      window.KPI_COLOR_MAP[id] =
+        BASE_DISTINCT_COLORS[i % BASE_DISTINCT_COLORS.length];
+    });
 
-  // 3) KPI deep-linking (?open=tpv etc)
-  if (KPI_KEYS.has(PAGE_CONTEXT.open)) {
-    openKpiDrawerSafe(PAGE_CONTEXT.open);
-    clearOpenParamFromUrl();
-    return;
-  }
+    /* =====================================================
+       3) RENDER + WIRE UI (MUST HAPPEN AFTER DATA)
+       ===================================================== */
+    renderAndWirePage();
 
-  // 4) Explicit loan open (?open=loan&loanId=123)
-  if (PAGE_CONTEXT.open === "loan" && PAGE_CONTEXT.loanId) {
-    const loan = currentLoans.find(
-      l => (l.loanId ?? l.id) === PAGE_CONTEXT.loanId
-    );
-    if (loan) {
-      openLoanDrawerSafe(loan);
-      clearOpenParamFromUrl();
-      return;
+    /* ===============================
+       SINGLE ENTRY HANDLER (AUTHORITATIVE)
+       =============================== */
+    const KPI_KEYS = new Set(["tpv", "rates", "payments", "distribution"]);
+    function openLoanDrawerSafe(loan) {
+      if (!loan) return;
+      requestAnimationFrame(() => {
+        openDrawerForLoan(loan);
+        drawer.classList.add("open");
+        drawer.setAttribute("aria-hidden", "false");
+      });
     }
-  }
-})();
+    function openKpiDrawerSafe(key) {
+      if (!key) return;
+      ENTRY_HANDLED = true; // 🔑 latch intent
+      currentMode = "kpi";
+      openDrawerForKPI();
+      if (key === "tpv") return renderTPVDrawer();
+      if (key === "rates") return renderRatesDrawer();
+      if (key === "payments") return renderPaymentsDrawer();
+      if (key === "distribution") return renderDistributionDrawer();
+    }
+    (function handleEntry() {
+      // 1) REPORTING ENTRY — STATELESS
+      // Tiles view always, BUT honor open= if present
+      if (PAGE_CONTEXT.cameFromReporting && !HAS_HANDLED_REPORTING_ENTRY) {
+        // KPI deep-link from Reporting
+        if (KPI_KEYS.has(PAGE_CONTEXT.open)) {
+          openKpiDrawerSafe(PAGE_CONTEXT.open);
+          clearOpenParamFromUrl();
+          sessionStorage.setItem("handledReportingEntry", "true");
+          return;
+        }
+        // Explicit loan from Reporting
+        if (PAGE_CONTEXT.open === "loan" && PAGE_CONTEXT.loanId) {
+          const loan = currentLoans.find(
+            l => (l.loanId ?? l.id) === PAGE_CONTEXT.loanId
+          );
+          if (loan) {
+            openLoanDrawerSafe(loan);
+            clearOpenParamFromUrl();
+            sessionStorage.setItem("handledReportingEntry", "true");
+            return;
+          }
+        }
+        // Default first loan ONLY on first entry
+        if (currentLoans.length) {
+          openLoanDrawerSafe(currentLoans[0]);
+        }
+        clearOpenParamFromUrl();
+        sessionStorage.setItem("handledReportingEntry", "true");
+        return;
+      }
+      // 3) KPI deep-linking (?open=tpv etc)
+      if (KPI_KEYS.has(PAGE_CONTEXT.open)) {
+        openKpiDrawerSafe(PAGE_CONTEXT.open);
+        clearOpenParamFromUrl();
+        return;
+      }
+      // 4) Explicit loan open (?open=loan&loanId=123)
+      if (PAGE_CONTEXT.open === "loan" && PAGE_CONTEXT.loanId) {
+        const loan = currentLoans.find(
+          l => (l.loanId ?? l.id) === PAGE_CONTEXT.loanId
+        );
+        if (loan) {
+          openLoanDrawerSafe(loan);
+          clearOpenParamFromUrl();
+          return;
+        }
+      }
+    })();
 
-// 🔑 IFRAME DEFAULT — always show Loan 1 details
-if (
-  PAGE_CONTEXT.isEmbed &&
-  currentLoans.length &&
-  !drawer.classList.contains("open")
-) {
-  openDrawerForLoan(currentLoans[0]);
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden", "false");
-}
-  
+    // 🔑 IFRAME DEFAULT — always show Loan 1 details
+    if (
+      PAGE_CONTEXT.isEmbed &&
+      currentLoans.length &&
+      !drawer.classList.contains("open")
+    ) {
+      openDrawerForLoan(currentLoans[0]);
+      drawer.classList.add("open");
+      drawer.setAttribute("aria-hidden", "false");
+    }
+  } catch (err) {
+    console.error("Critical init error:", err);
+    // Show user-friendly message instead of blank page
+    const errorDiv = document.createElement("div");
+    errorDiv.style.padding = "2rem";
+    errorDiv.style.color = "red";
+    errorDiv.style.textAlign = "center";
+    errorDiv.innerHTML = `
+      <h2>Error loading portfolio</h2>
+      <p>Something went wrong while loading your loans.</p>
+      <p>Please refresh the page or check the console for details.</p>
+    `;
+    document.body.innerHTML = '';
+    document.body.appendChild(errorDiv);
+  }
 }
 
     
