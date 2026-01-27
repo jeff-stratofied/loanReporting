@@ -69,14 +69,13 @@ function getMonthlyServicingRate(feeConfig) {
 
 function resolveFeeWaiverFlags(user, loan) {
   const userWaiver = user?.feeWaiver || "none";
-  const loanWaiver = loan?.feeWaiver || "none";  // Loan override
+  const loanWaiver = loan?.feeWaiver || "none";  // Loan override priority
 
-  // Helper to check waiver level
   const effectiveWaiver = loanWaiver !== "none" ? loanWaiver : userWaiver;
 
   return {
-    waiveSetup: ["setup", "grace", "all"].includes(effectiveWaiver),
-    waiveMonthly: ["grace", "all"].includes(effectiveWaiver),  // "grace" waives during grace/deferral
+    waiveSetup: ["setup", "setup-grace", "all"].includes(effectiveWaiver),
+    waiveMonthlyDuringGrace: ["setup-grace", "all"].includes(effectiveWaiver),
     waiveAll: effectiveWaiver === "all"
   };
 }
