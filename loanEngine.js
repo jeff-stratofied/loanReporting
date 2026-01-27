@@ -698,8 +698,7 @@ if (!window.__loggedLoans.has(loanId)) {
     loanDate.getMonth() === purchaseMonth.getMonth();
 
   const ownerIsLender = user?.role === "lender";
-const { waiveSetup, waiveMonthlyDuringGrace, waiveAll } = resolveFeeWaiverFlags(user, loan);
-
+const { waiveSetup, waiveMonthly } = resolveFeeWaiverFlags(user, loan);
 
   let feeThisMonth = 0;
 
