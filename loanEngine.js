@@ -428,39 +428,27 @@ const user =
     : { role: "investor", feeWaiver: "none" };
 
 
- // ──────────────────────────────────────────────────────────────
 // TEMPORARY FEE WAIVER TESTING BLOCK - REMOVE AFTER CONFIRMATION
-// ──────────────────────────────────────────────────────────────
 const loanName = loan.loanName || loan.id || "unknown";
 
-// 1. Force complete waiver for one loan (overrides everything)
-if (loanName.includes("OSU 2024 8.00")) {
-  loan.feeWaiver = "all";
-  console.log(`TEMP TEST: Forced loan.feeWaiver = "all" on ${loanName}`);
+const testKey = `waiver-test-${loanName.replace(/\s+/g, '-')}`;
+if (!window[testKey]) {
+  if (loanName.includes("OSU 2024 8.00")) {
+    loan.feeWaiver = "all";
+    console.log(`TEMP TEST: Forced loan.feeWaiver = "all" on ${loanName}`);
+  } else if (loanName.includes("PSU 2024 8.83")) {
+    loan.feeWaiver = "setup";
+    console.log(`TEMP TEST: Forced loan.feeWaiver = "setup" on ${loanName}`);
+  } else if (loanName.includes("CMU 2024 9.00")) {
+    user.feeWaiver = "grace";
+    console.log(`TEMP TEST: Forced user.feeWaiver = "grace" on ${loanName}`);
+  } else if (loanName.includes("MICH 2024 9.00")) {
+    loan.feeWaiver = "none";
+    user.feeWaiver = "none";
+    console.log(`TEMP TEST: Forced no waiver on ${loanName}`);
+  }
+  window[testKey] = true;
 }
-
-// 2. Force setup-only waiver for another loan
-else if (loanName.includes("PSU 2024 8.83")) {
-  loan.feeWaiver = "setup";
-  console.log(`TEMP TEST: Forced loan.feeWaiver = "setup" on ${loanName}`);
-}
-
-// 3. Force user-level grace waiver (monthly during grace/deferral)
-else if (loanName.includes("CMU 2024 9.00")) {
-  user.feeWaiver = "grace";
-  console.log(`TEMP TEST: Forced user.feeWaiver = "grace" on ${loanName}`);
-}
-
-// 4. Force baseline (no waiver) for comparison
-else if (loanName.includes("MICH 2024 9.00")) {
-  loan.feeWaiver = "none";
-  user.feeWaiver = "none";
-  console.log(`TEMP TEST: Forced no waiver on ${loanName}`);
-}
-// ──────────────────────────────────────────────────────────────
-// END TEMPORARY TESTING BLOCK
-// ──────────────────────────────────────────────────────────────
-
   
   // Ownership always begins at the first of purchase month
   const purchaseMonth = new Date(
