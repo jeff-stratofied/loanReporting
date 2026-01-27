@@ -428,30 +428,27 @@ const user =
     : { role: "investor", feeWaiver: "none" };
 
 
+// ──────────────────────────────────────────────────────────────
 // TEMPORARY FEE WAIVER TESTING BLOCK - REMOVE AFTER CONFIRMATION
+// ──────────────────────────────────────────────────────────────
 const loanName = loan.loanName || loan.id || "unknown";
+const isTestWaiverLoan =
+  loan.loanId === "C0RAT4N23A" ||                           // ← your known ID
+  (loan.principal === 3500 && loan.nominalRate === 8.00 && 
+   (loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU"))) ||
+  ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"]
+    .some(n => loanName.includes(n));
 
-const testKey = `waiver-test-${loanName.replace(/\s+/g, '-')}`;
-if (!window[testKey]) {
-  if (
-  loan.principal === 3750 &&                // or whatever the orig amt is
-  loan.nominalRate === 8.00 &&
-  loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU")
-) {
-  loan.feeWaiver = "all";
-  console.log(`TEMP: Forced full waiver on loan matching OSU criteria (principal=${loan.principal}, rate=${loan.nominalRate})`);
-} else if (loanName.includes("PSU 2024 8.83")) {
-    loan.feeWaiver = "setup";
-    console.log(`TEMP TEST: Forced loan.feeWaiver = "setup" on ${loanName}`);
-  } else if (loanName.includes("CMU 2024 9.00")) {
-    user.feeWaiver = "grace";
-    console.log(`TEMP TEST: Forced user.feeWaiver = "grace" on ${loanName}`);
-  } else if (loanName.includes("MICH 2024 9.00")) {
-    loan.feeWaiver = "none";
-    user.feeWaiver = "none";
-    console.log(`TEMP TEST: Forced no waiver on ${loanName}`);
+if (isTestWaiverLoan) {
+  // Force waiver logic (your current code)
+  loan.feeWaiver = "all";   // or whatever level you want for OSU
+  console.log(`TEMP: Forced full waiver on ${loanName} (ID=${loan.loanId}, principal=${loan.principal}, rate=${loan.nominalRate}, school=${loan.school || 'none'})`);
+
+  // Optional: one-time guard if you still want it
+  const testKey = `waiver-test-${loan.loanId || loanName.replace(/\s+/g, '-')}`;
+  if (!window[testKey]) {
+    window[testKey] = true;
   }
-  window[testKey] = true;
 }
   
   // Ownership always begins at the first of purchase month
@@ -1050,25 +1047,31 @@ console.log(`DEBUG: Processing loan in buildPortfolioViews: ${loan.loanName || l
 console.log(`DEBUG: Waiver check - loanName: "${loan.loanName || ""}", matches any? ${waivedLoanNames.some(name => (loan.loanName || "").includes(name))}`);
   
 // ──────────────────────────────────────────────────────────────
-    // TEMP: Earnings impact check for waived loans
-    // ──────────────────────────────────────────────────────────────
-    const waivedLoanNames = ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"];
-    
-    if (waivedLoanNames.some(name => (loan.loanName || "").includes(name))) {
-      const lastRow = timeline[timeline.length - 1] || {};
-      console.log(`EARNINGS IMPACT - ${loan.loanName || loan.id || "unknown"}:`, {
-        cumFees:        lastRow.cumFees?.toFixed(2)        ?? "0.00",
-        netEarnings:    lastRow.netEarnings?.toFixed(2)    ?? "0.00",
-        totalMonths:    timeline.length,
-        ownedMonths:    timeline.filter(r => r.isOwned).length,
-        cumPrincipal:   lastRow.cumPrincipal?.toFixed(2)   ?? "0.00",
-        cumInterest:    lastRow.cumInterest?.toFixed(2)    ?? "0.00",
-        hasGrace:       loan.graceYears > 0,
-        hasDeferral:    loan.events?.some(e => e.type === "deferral") ?? false,
-        lastFeeMonth:   lastRow.monthlyFees?.toFixed(2)    ?? "0.00"
-      });
-    }
-    // ──────────────────────────────────────────────────────────────
+// TEMP: Earnings impact check for waived/test loans
+// ──────────────────────────────────────────────────────────────
+const loanName = loan.loanName || loan.id || "unknown";
+const isTestWaiverLoan =
+  loan.loanId === "C0RAT4N23A" ||
+  (loan.principal === 3500 && loan.nominalRate === 8.00 && 
+   (loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU"))) ||
+  ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"]
+    .some(n => loanName.includes(n));
+
+if (isTestWaiverLoan) {
+  const lastRow = timeline[timeline.length - 1] || {};
+  console.log(`EARNINGS IMPACT - ${loanName} (ID=${loan.loanId || 'no-id'}):`, {
+    feeWaiverFinal: loan.feeWaiver || "none",
+    cumFees:        lastRow.cumFees?.toFixed(2)        ?? "0.00",
+    netEarnings:    lastRow.netEarnings?.toFixed(2)    ?? "0.00",
+    totalMonths:    timeline.length,
+    ownedMonths:    timeline.filter(r => r.isOwned).length,
+    cumPrincipal:   lastRow.cumPrincipal?.toFixed(2)   ?? "0.00",
+    cumInterest:    lastRow.cumInterest?.toFixed(2)    ?? "0.00",
+    hasGrace:       loan.graceYears > 0,
+    hasDeferral:    loan.events?.some(e => e.type === "deferral") ?? false,
+    lastFeeMonth:   lastRow.monthlyFees?.toFixed(2)    ?? "0.00"
+  });
+}
     
   });
 
