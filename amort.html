@@ -1362,8 +1362,26 @@ function clearOpenParamFromUrl() {
    ========================================================= */
   
 async function loadAndNormalizeLoans() {
+ 
+  /* hide
   const apiResult = await loadLoans();
+*/
 
+console.log("📡 Calling loadLoans()...");
+const loanData = await loadLoans();
+
+console.log("📦 loadLoans() result:", {
+  exists: !!loanData,
+  type: typeof loanData,
+  isArray: Array.isArray(loanData),
+  keys: loanData && !Array.isArray(loanData) ? Object.keys(loanData) : null,
+  length: Array.isArray(loanData) ? loanData.length : null,
+  sample: Array.isArray(loanData) ? loanData[0] : loanData
+});
+
+window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+window.__AMORT_DEBUG__.loanData = loanData;
+  
   // Support BOTH return shapes:
   // 1) array (amort page)
   // 2) { loans, sha } (admin / other pages)
@@ -1489,7 +1507,25 @@ async function init() {
   );
   console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
 
+  /* hide
   const loanData = await loadLoans();  // Returns { loans: array, sha: string } from worker
+ */
+  
+  console.log("📡 Calling loadLoans()...");
+const loanData = await loadLoans();
+
+console.log("📦 loadLoans() result:", {
+  exists: !!loanData,
+  type: typeof loanData,
+  isArray: Array.isArray(loanData),
+  keys: loanData && !Array.isArray(loanData) ? Object.keys(loanData) : null,
+  length: Array.isArray(loanData) ? loanData.length : null,
+  sample: Array.isArray(loanData) ? loanData[0] : loanData
+});
+
+window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+window.__AMORT_DEBUG__.loanData = loanData;
+  
   const rawLoans = loanData.loans || [];  // Extract the array (fallback to [] on error)
 
   console.log('Raw loans count:', rawLoans.length);  // ← Updated: now counts the array
@@ -4975,9 +5011,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         day: "numeric"
       })}`;
   }
-
+/* hide
   // Initialize page (runs exactly once)
   await init();
+*/
+
+  (async () => {
+  try {
+    console.log("🚀 init() starting");
+    await init();
+    console.log("✅ init() completed");
+  } catch (err) {
+    console.error("💥 init() FAILED", err);
+    window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+    window.__AMORT_DEBUG__.initError = err;
+  }
+})();
+
+  
 });
 
 // =====================================================
