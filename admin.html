@@ -1347,61 +1347,56 @@ loanTable.addEventListener("change", (e) => {
 });
 
 
+  // ────────────────────────────────────────────────
+  // Fee Management button listener (OUTSIDE table click)
+  // ────────────────────────────────────────────────
+  document.getElementById("fee-management-btn")?.addEventListener("click", () => {
+    openFeeWaiverDrawer();
+  });
+
+  // Table click handler — only for table actions
   document.getElementById("loan-table").addEventListener("click", (e) => {
-const actionEl = e.target.closest("[data-action]");
-if (!actionEl) return;
+    const actionEl = e.target.closest("[data-action]");
+    if (!actionEl) return;
 
-    // Fee Management button (outside the table)
-document.getElementById("fee-management-btn")?.addEventListener("click", () => {
-  openFeeWaiverDrawer();
-});
-
-const action = actionEl.dataset.action;
-const row = actionEl.closest("tr");
+    const action = actionEl.dataset.action;
+    const row = actionEl.closest("tr");
 
     const idx = Array.from(row.parentNode.children).indexOf(row);
     
-      if (action === "events") {
+    if (action === "events") {
       const loan = currentLoans[idx];
       openEventsDrawer(loan);
       return;
     }
 
-if (action === "ownership") {
-  const loan = currentLoans[idx];
-  openOwnershipDrawer(loan);
-  return;
-}
-
+    if (action === "ownership") {
+      const loan = currentLoans[idx];
+      openOwnershipDrawer(loan);
+      return;
+    }
     
-   if (action === "delete") {
-  if (!confirm("Delete this loan?")) return;
-
-  currentLoans.splice(idx, 1);
-  renderTable();
-  markDirty();   // ✅ REQUIRED
-  return;
-}
-
+    if (action === "delete") {
+      if (!confirm("Delete this loan?")) return;
+      currentLoans.splice(idx, 1);
+      renderTable();
+      markDirty();
+      return;
+    }
 
     if (action === "duplicate") {
-    const clone = { ...currentLoans[idx] };
-
-    // Build a set of existing IDs to avoid accidental collisions
-    const existingIds = new Set(currentLoans.map(l => String(l.loanId)));
-    let newId;
-    do {
-      newId = generateLoanId();
-    } while (existingIds.has(newId));
-
-    clone.loanId = newId;
-    clone.loanName = clone.loanName + " (Copy)";
-
-    currentLoans.push(clone);
-    renderTable();
-    return;
-  }
-
+      const clone = { ...currentLoans[idx] };
+      const existingIds = new Set(currentLoans.map(l => String(l.loanId)));
+      let newId;
+      do {
+        newId = generateLoanId();
+      } while (existingIds.has(newId));
+      clone.loanId = newId;
+      clone.loanName = clone.loanName + " (Copy)";
+      currentLoans.push(clone);
+      renderTable();
+      return;
+    }
   });
 
 
