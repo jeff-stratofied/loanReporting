@@ -340,12 +340,12 @@
 
 
 /* =========================================
-   Loan event badges — MATCH AMORT: circle icon only + tooltip
+   Loan event badges — MATCH AMORT: light circle + icon + hover tooltip
    ========================================= */
 .loan-badges {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 4px; /* Tight spacing for position between name and school */
   flex-wrap: wrap;
 }
 
@@ -353,36 +353,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;               /* Slightly larger circle than amort for visibility */
-  height: 24px;
-  border-radius: 50%;        /* Full circle */
-  font-size: 14px;           /* Bigger emoji/symbol */
-  font-weight: normal;
-  line-height: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;  /* Smaller icon to match amort */
   cursor: pointer;
-  border: none;              /* Remove border for clean amort look */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* Subtle shadow like amort */
-  transition: transform 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);  /* Subtle amort shadow */
+  transition: transform 0.15s ease;
 }
 
 .loan-badge:hover {
-  transform: scale(1.15);    /* Slight zoom on hover — nice touch */
+  transform: scale(1.1);  /* Slight zoom on hover */
 }
 
-/* Colored backgrounds — keep your earnings colors */
+/* Light colored backgrounds — match amort opacity */
 .loan-badge.prepayment {
-  background: rgba(34, 197, 94, 0.9);   /* Stronger green opacity for circle */
-  color: white;
+  background: rgba(34, 197, 94, 0.18);  /* Light green */
+  color: #166534;
 }
 
 .loan-badge.deferral {
-  background: rgba(234, 179, 8, 0.9);   /* Stronger yellow/orange */
-  color: white;
+  background: rgba(234, 179, 8, 0.18);  /* Light yellow/orange */
+  color: #92400e;
 }
 
 .loan-badge.default {
-  background: rgba(239, 68, 68, 0.9);   /* Stronger red */
-  color: white;
+  background: rgba(239, 68, 68, 0.15);  /* Light red */
+  color: #b91c1c;
 }
 
 /* =========================================
@@ -1893,15 +1890,30 @@ if (sortLoansEl) {
 function renderTableEventBadge(loan) {
   if (!loan.eventType) return "";
 
-  // 🔑 Tooltip text (reuse ROI logic)
-  const tooltip = buildEventBadgeTooltip(loan);
+  // Build tooltip text (earnings wording, multi-line for readability)
+  let tooltip = "";
+  if (loan.eventType === "deferral") {
+    const start = loan.events?.find(e => e.type === "deferral")?.startDate || "Unknown";
+    const months = loan.events?.find(e => e.type === "deferral")?.months || 0;
+    tooltip = `Deferral\nStart: ${start}\nMonths: ${months}`;
+  } else if (loan.eventType === "default") {
+    const date = loan.events?.find(e => e.type === "default")?.date || "Unknown";
+    const recovered = loan.events?.find(e => e.type === "default")?.recoveredAmount ?? 0;
+    tooltip = `Default\n${date}\nRecovered ${formatCurrency(recovered)}`;
+  } else if (loan.eventType === "prepayment") {
+    const date = loan.events?.find(e => e.type === "prepayment")?.date || "Unknown";
+    const amount = loan.events?.find(e => e.type === "prepayment")?.amount ?? 0;
+    tooltip = `Prepayment\n${formatCurrency(amount)}\n${date}`;
+  } else {
+    tooltip = loan.eventType.charAt(0).toUpperCase() + loan.eventType.slice(1);
+  }
 
   return `
     <span
       class="table-event-badge ${loan.eventType}"
-      data-tooltip="${tooltip.replace(/"/g, "&quot;")}"
+      title="${tooltip}"
     >
-      ${EVENT_ICON[loan.eventType]}
+      ${EVENT_ICON[loan.eventType] || '•'}
     </span>
   `;
 }
@@ -4425,21 +4437,12 @@ function renderLoanTable(loans) {
   const tbody = table?.querySelector("tbody");
   if (!tbody) return;
 
-  // Define ICONS to match amort page (deferral: pause, default: warning, prepayment: money bag)
-  const ICONS = {
-    deferral: '⏸',
-    default: '⚠️',
-    prepayment: '💰'  // Adjust if amort uses different icons
-  };
-
-  // -------------------------
-  // Render rows
-  // -------------------------
   tbody.innerHTML = "";
+
   loans.forEach(loan => {
     const tr = document.createElement("tr");
 
-    // MATCH ROI — event row shading
+    // Row shading
     if (loan.eventType === "prepayment") tr.classList.add("event-prepayment");
     if (loan.eventType === "deferral")   tr.classList.add("event-deferral");
     if (loan.eventType === "default")    tr.classList.add("event-default");
@@ -4449,38 +4452,10 @@ function renderLoanTable(loans) {
 
     const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
 
-    // Build events column manually so we can attach hover listeners to each badge
-let eventsContent = "";
-if (loan.events?.length > 0) {
-  loan.events.forEach(event => {
-    const badgeClass = `loan-badge ${event.type}`;  // Keep your class names
-    const icon = ICONS[event.type] || '•';          // Fallback to dot if missing
-
-    // Optional: build tooltip text (you can use getEventBadgeTooltip if already defined)
-    let tooltipText = "";
-    if (event.type === "deferral") {
-      const start = event.startDate || event.from ? formatMonthYear(new Date(event.startDate || event.from)) : "Unknown";
-      const months = Number(event.months ?? event.duration ?? 0);
-      tooltipText = `Deferral\nStart: ${start}\nMonths: ${months}`;
-    } else if (event.type === "default") {
-      const month = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
-      const recovered = Number(event.recoveredAmount ?? 0);
-      tooltipText = `Default\n${month}\nRecovered ${formatCurrency(recovered)}`;
-    } else if (event.type === "prepayment") {
-      const date = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
-      const amount = Number(event.amount ?? event.principal ?? 0);
-      tooltipText = `Prepayment\n${formatCurrency(amount)}\n${date}`;
-    } else {
-      tooltipText = `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}`;
-    }
-
-    eventsContent += `
-      <span class="${badgeClass}" title="${tooltipText}">
-        ${icon}
-      </span>
-    `;
-  });
-}  
+    // Events column: use the badge function, no placeholder if empty
+    const eventsContent = loan.events?.length > 0 
+      ? loan.events.map(event => renderTableEventBadge({ ...loan, eventType: event.type })).join('')
+      : "";  // Empty cell like amort
 
     tr.innerHTML = `
       <td>${loan.loanId ?? ""}</td>
@@ -4498,15 +4473,11 @@ if (loan.events?.length > 0) {
       <td>${formatCurrency(getCurrentNetEarnings(loan))}</td>
     `;
 
-
-
+    // Row hover and click (unchanged)
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
 
-    const openLoan = () => {
-      openLoanDrawerSafe(loan);
-    };
-
+    const openLoan = () => openLoanDrawerSafe(loan);
     tr.addEventListener("click", openLoan);
     tr.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
