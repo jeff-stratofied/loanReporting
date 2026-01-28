@@ -1373,7 +1373,7 @@ function renderTable() {
   <select data-field="feeWaiver">
     <option value="none" ${loan.feeWaiver === "none" ? "selected" : ""}>None</option>
     <option value="setup" ${loan.feeWaiver === "setup" ? "selected" : ""}>Setup Only</option>
-    <option value="grace" ${loan.feeWaiver === "grace" ? "selected" : ""}>Setup & Servicing</option>
+    <option value="grace" ${loan.feeWaiver === "grace" ? "selected" : ""}>Setup & Grace/Deferral</option>
     <option value="all" ${loan.feeWaiver === "all" ? "selected" : ""}>All</option>
   </select>
 </td>
