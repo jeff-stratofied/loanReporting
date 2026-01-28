@@ -435,11 +435,12 @@ input:focus, select:focus {
 ];
 
   let currentLoans = [];
+  let platformConfig = null;
   let currentSha = null;
-
+  
 // Fee waiver drawer state
 let feeDrawerOpen = false;
-let userFeeWaivers = {}; // will hold { "jeff": "none", "nick": "all", ... }
+let userFeeWaivers = {}; 
   
   // ===========================
 // UNSAVED CHANGES TRACKING
@@ -1004,13 +1005,13 @@ function openFeeWaiverDrawer() {
                 />
               </div>
               <label for="${id}" style="
-                cursor: pointer;
-                font-size: 0.98rem;
-                color: ${isSelected ? 'var(--text)' : 'var(--muted)'};
-                font-weight: ${isSelected ? '500' : 'normal'};
-              ">
-                ${opt.label}
-              </label>
+  cursor: pointer;
+  font-size: 0.98rem;
+  color: ${isSelected ? 'var(--green)' : 'var(--muted)'};
+  font-weight: ${isSelected ? '500' : 'normal'};
+">
+  ${opt.label} ${isSelected && current !== 'none' ? '<span style="font-size:0.85rem; opacity:0.8;">(active)</span>' : ''}
+</label>
             `;
           }).join('')}
         </div>
@@ -1371,28 +1372,39 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
   const status = document.getElementById("status");
 
 async function loadFromBackend() {
-  status.textContent = "Loading…";
-
   try {
-    const url =
-      "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
-
-    const res = await fetch(url, { cache: "no-store" });
-
-    if (!res.ok) {
-      throw new Error(`Load failed: ${res.status}`);
-    }
-
-    const data = await res.json();   // ✅ THIS WAS MISSING
-
-    currentLoans = data.loans.map(normalizeLoan);
+    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
+    if (!res.ok) throw new Error("Load failed");
+    
+    const data = await res.json();
+    currentLoans = data.loans || [];
     currentSha = data.sha;
+    
+    // Load platformConfig (adjust if separate endpoint)
+    platformConfig = {
+      fees: data.fees || { setupFee: 150, monthlyServicingBps: 25 },
+      users: data.users || [],
+      sha: data.sha || currentSha
+    };
+
+    // Sync userFeeWaivers from platformConfig.users
+    userFeeWaivers = {};
+    platformConfig.users.forEach(u => {
+      if (u.id && u.feeWaiver) {
+        userFeeWaivers[u.id] = u.feeWaiver;
+      }
+    });
+
+    // Fill defaults for missing users
+    USER_OPTIONS.forEach(opt => {
+      if (!(opt.value in userFeeWaivers)) {
+        userFeeWaivers[opt.value] = 'none';
+      }
+    });
 
     renderTable();
-    status.textContent = "Loaded ✔";
-  } catch (e) {
-    console.error("[ADMIN] loadFromBackend failed", e);
-    status.textContent = "Load failed";
+  } catch (err) {
+    console.error("Load error:", err);
   }
 }
 
@@ -1407,89 +1419,94 @@ async function saveToBackend() {
   // VALIDATION — block saving invalid or missing values
   // =====================================================
   for (const loan of updated) {
-
     // ---- existing validations ----
     if (loan.principal === "" || loan.principal === null || Number(loan.principal) <= 0) {
       alert(`Loan "${loan.loanName}" must have an Original Loan Amount greater than 0.`);
       status.textContent = "Save blocked";
       return;
     }
-
     if (!loan.loanStartDate || loan.loanStartDate === "") {
       alert(`Loan "${loan.loanName}" is missing a Loan Start Date.`);
       status.textContent = "Save blocked";
       return;
     }
-
     // ---- DEFAULT EVENT VALIDATION ----
     const defaults = loan.events?.filter(e => e.type === "default") || [];
-
     if (defaults.length > 1) {
       alert(`Loan "${loan.loanName}" has more than one Default event.`);
       status.textContent = "Save blocked";
       return;
     }
-
     if (defaults.length === 1) {
       const d = defaults[0];
-
       if (!d.date) {
         alert(`Loan "${loan.loanName}" default is missing a date.`);
         status.textContent = "Save blocked";
         return;
       }
-
       if (d.recoveryAmount == null || d.recoveryAmount < 0) {
         alert(`Loan "${loan.loanName}" default recovery amount must be $0 or more.`);
         status.textContent = "Save blocked";
         return;
       }
     }
-
-// ---- OWNERSHIP VALIDATION ----
-if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
-  alert(`Loan "${loan.loanName}" has no ownership lots.`);
-  status.textContent = "Save blocked";
-  return;
-}
-
-const sum = loan.ownershipLots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
-if (Math.abs(sum - 1) > 0.0001) {
-  alert(`Loan "${loan.loanName}" ownership must total 100%.`);
-  status.textContent = "Save blocked";
-  return;
-}
-
-for (const lot of loan.ownershipLots) {
-  if (!lot.user || !lot.purchaseDate || lot.pct <= 0) {
-    alert(`Loan "${loan.loanName}" has an invalid ownership lot.`);
-    status.textContent = "Save blocked";
-    return;
-  }
-}
-    
+    // ---- OWNERSHIP VALIDATION ----
+    if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
+      alert(`Loan "${loan.loanName}" has no ownership lots.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+    const sum = loan.ownershipLots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
+    if (Math.abs(sum - 1) > 0.0001) {
+      alert(`Loan "${loan.loanName}" ownership must total 100%.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+    for (const lot of loan.ownershipLots) {
+      if (!lot.user || !lot.purchaseDate || lot.pct <= 0) {
+        alert(`Loan "${loan.loanName}" has an invalid ownership lot.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+    }
   }
 
-updated.forEach(loan => {
-  delete loan.user;
-  delete loan.purchaseDate;
-  delete loan.purchasePrice;
-});
+  updated.forEach(loan => {
+    delete loan.user;
+    delete loan.purchaseDate;
+    delete loan.purchasePrice;
+  });
 
+  // =====================================================
+  // UPDATE PLATFORM CONFIG WITH NEW FEE WAIVERS
+  // =====================================================
+  if (platformConfig && platformConfig.users) {
+    platformConfig.users = platformConfig.users.map(user => {
+      if (user.id in userFeeWaivers) {
+        return { ...user, feeWaiver: userFeeWaivers[user.id] };
+      }
+      return user;
+    });
+  }
 
-
-  
   // =====================================================
   // SAVE (only runs if validation passed)
   // =====================================================
   try {
+    const payload = {
+      loans: updated,
+      platformConfig: platformConfig ? {
+        fees: platformConfig.fees,
+        users: platformConfig.users,
+        sha: currentSha
+      } : undefined,
+      sha: currentSha
+    };
+
     const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        loans: updated,
-        sha: currentSha
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
@@ -1500,7 +1517,7 @@ updated.forEach(loan => {
     clearDirty();
 
   } catch (err) {
-    console.error(err);
+    console.error("Save error:", err);
     status.textContent = "Save failed";
   }
 }
