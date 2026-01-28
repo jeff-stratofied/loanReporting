@@ -4488,27 +4488,34 @@ function renderLoanTable(loans) {
     // Attach hover listeners to each badge after it's in the DOM
     const badges = tr.querySelectorAll('.event-badge');
     badges.forEach(badge => {
-      badge.addEventListener('mouseenter', (e) => {
-        try {
-          const eventJson = badge.dataset.event;
-          if (eventJson) {
-            const event = JSON.parse(eventJson);
-            const text = getEventBadgeTooltip(event);  // your tooltip function
-            if (text) showTooltip(e, text);
-          }
-        } catch (err) {
-          console.warn("Failed to show tooltip", err);
-        }
-      });
+  badge.addEventListener("mouseenter", (e) => {
+    try {
+      const eventJson = badge.dataset.event;
+      if (eventJson) {
+        const event = JSON.parse(eventJson);
+        const text = getEventBadgeTooltip(event);
+        if (text) showTooltip(e, text);
+      }
 
-      badge.addEventListener('mouseleave', () => {
-        try {
-          hideTooltip();
-        } catch (err) {
-          console.warn("Failed to hide tooltip", err);
-        }
-      });
-    });
+      // 🔑 MATCH AMORT: highlight row when badge is hovered
+      tr.classList.add("row-hover");
+
+    } catch (err) {
+      console.warn("Failed to show tooltip", err);
+    }
+  });
+
+  badge.addEventListener("mouseleave", () => {
+    try {
+      hideTooltip();
+    } catch (err) {
+      console.warn("Failed to hide tooltip", err);
+    }
+
+    // 🔑 MATCH AMORT: remove highlight on leave
+    tr.classList.remove("row-hover");
+  });
+});
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
