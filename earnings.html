@@ -4448,26 +4448,39 @@ function renderLoanTable(loans) {
     const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
 
     // Build events column manually so we can attach hover listeners to each badge
-    let eventsContent = "";
-    if (loan.events?.length > 0) {
-      loan.events.forEach(event => {
-        const badgeClass = `event-badge mini ${event.type}`;
-        const icon = ICONS[event.type] || '';  // Safe fallback if type unknown
+let eventsContent = "";
+if (loan.events?.length > 0) {
+  loan.events.forEach(event => {
+    const badgeClass = `event-badge mini ${event.type}`;
+    const icon = ICONS[event.type] || '';
 
-        // Store event data on the badge for tooltip
-        const eventData = JSON.stringify(event).replace(/"/g, '&quot;');
-
-        eventsContent += `
-          <span class="${badgeClass}"
-                data-event='${eventData}'
-                title="">  <!-- title="" prevents native browser tooltip -->
-            ${icon}
-          </span>
-        `;
-      });
+    // Build native browser tooltip text — same format as amort
+    let tooltipText = "";
+    if (event.type === "deferral") {
+      const start = event.startDate || event.from ? formatMonthYear(new Date(event.startDate || event.from)) : "Unknown";
+      const months = Number(event.months ?? event.duration ?? 0);
+      tooltipText = `Deferral\n${start} • ${months} months`;
+    } else if (event.type === "default") {
+      const month = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
+      const recovered = Number(event.recoveredAmount ?? 0);
+      tooltipText = `Default\n${month} • Recovered ${formatCurrency(recovered)}`;
+    } else if (event.type === "prepayment") {
+      const date = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
+      const amount = Number(event.amount ?? event.principal ?? 0);
+      tooltipText = `Prepayment\n${formatCurrency(amount)} • ${date}`;
     } else {
-      eventsContent = "—";
+      tooltipText = `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}\n${event.date ? formatMonthYear(new Date(event.date)) : "Details"}`;
     }
+
+    eventsContent += `
+      <span class="${badgeClass}" title="${tooltipText}">
+        ${icon}
+      </span>
+    `;
+  });
+} else {
+  eventsContent = "—";
+}
 
     tr.innerHTML = `
       <td>${loan.loanId ?? ""}</td>
@@ -4485,30 +4498,7 @@ function renderLoanTable(loans) {
       <td>${formatCurrency(getCurrentNetEarnings(loan))}</td>
     `;
 
-    // Attach hover listeners to each badge after it's in the DOM
-    const badges = tr.querySelectorAll('.event-badge');
-    badges.forEach(badge => {
-      badge.addEventListener('mouseenter', (e) => {
-        try {
-          const eventJson = badge.dataset.event;
-          if (eventJson) {
-            const event = JSON.parse(eventJson);
-            const text = getEventBadgeTooltip(event);  // your tooltip function
-            if (text) showTooltip(e, text);
-          }
-        } catch (err) {
-          console.warn("Failed to show tooltip", err);
-        }
-      });
 
-      badge.addEventListener('mouseleave', () => {
-        try {
-          hideTooltip();
-        } catch (err) {
-          console.warn("Failed to hide tooltip", err);
-        }
-      });
-    });
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
