@@ -1524,7 +1524,6 @@ async function saveToBackend() {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         loans: updated,
-        sha: currentSha
       })
     });
     const loansData = await loansRes.json();
