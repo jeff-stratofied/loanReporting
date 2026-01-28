@@ -502,18 +502,19 @@ function openEventsDrawer(loan) {
   const drawer = document.createElement("div");
   drawer.id = "events-drawer";
   drawer.style.cssText = `
-    position:fixed;
-    top:0;
-    right:0;
-    width:360px;
-    height:100%;
-    background:var(--card);
-    box-shadow:var(--shadow);
-    padding:16px;
-    z-index:1000;
-    overflow:auto;
-  `;
-
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;                  /* wider for better readability */
+  height: 100%;
+  background: var(--card);
+  box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+  z-index: 1000;
+  overflow-y: auto;
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+`;
+  
   drawer.innerHTML = `
   <h3 style="margin-top:0">Events — ${loan.loanName}</h3>
 
@@ -823,7 +824,7 @@ function openOwnershipDrawer(loan) {
   };
 }
 
-  // ────────────────────────────────────────────────
+// ────────────────────────────────────────────────
 // Fee Waiver Management Drawer
 // ────────────────────────────────────────────────
 function openFeeWaiverDrawer() {
@@ -836,46 +837,58 @@ function openFeeWaiverDrawer() {
     position: fixed;
     top: 0;
     right: 0;
-    width: 380px;
+    width: 480px;
     height: 100%;
     background: var(--card);
-    box-shadow: var(--shadow);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.25);
     z-index: 1000;
     overflow-y: auto;
     color: var(--text);
   `;
 
-  // Default to 'none' if not set yet
+  // Ensure defaults exist
   USER_OPTIONS.forEach(u => {
     if (!(u.value in userFeeWaivers)) {
       userFeeWaivers[u.value] = 'none';
     }
   });
 
-  const optionsHtml = `
-    None
-    All
-    Setup
-    Setup + Grace/Deferral
-    Grace/Deferral Only
-  `.trim().split('\n').map(line => line.trim()).filter(Boolean);
+  const waiverOptions = [
+    { value: 'none',           label: 'None' },
+    { value: 'all',            label: 'All Fees' },
+    { value: 'setup',          label: 'Setup Only' },
+    { value: 'setup_grace',    label: 'Setup + Grace/Deferral' },
+    { value: 'grace_deferral', label: 'Grace/Deferral Only' },
+  ];
 
   const radioGroups = USER_OPTIONS.map(user => {
     const current = userFeeWaivers[user.value];
     return `
-      <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
-        <div style="font-weight: 600; margin-bottom: 12px;">
-          ${user.label} <span style="color:var(--muted); font-size:0.85rem;">(${user.value})</span>
+      <div style="padding-bottom: 28px; border-bottom: 1px solid var(--border);">
+        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 16px;">
+          ${user.label} <span style="color: var(--muted); font-size: 0.9rem; font-weight: normal;">(${user.value})</span>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${optionsHtml.map((label, i) => {
-            const value = ['none','all','setup','setup_grace','grace_deferral'][i];
-            const id = `fee-${user.value}-${value}`;
+        <div style="display: grid; grid-template-columns: 28px 1fr; gap: 12px 16px; align-items: center;">
+          ${waiverOptions.map(opt => {
+            const id = `fee-${user.value}-${opt.value}`;
+            const isSelected = current === opt.value;
             return `
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="radio" name="fee-${user.value}" value="${value}" 
-                  ${current === value ? 'checked' : ''} id="${id}">
-                ${label}
+              <div style="justify-self: center;">
+                <input type="radio" 
+                  name="fee-${user.value}" 
+                  value="${opt.value}" 
+                  id="${id}"
+                  ${isSelected ? 'checked' : ''}
+                  style="margin:0;"
+                />
+              </div>
+              <label for="${id}" style="
+                cursor: pointer;
+                font-size: 0.98rem;
+                color: ${isSelected ? 'var(--text)' : 'var(--muted)'};
+                font-weight: ${isSelected ? '500' : 'normal'};
+              ">
+                ${opt.label}
               </label>
             `;
           }).join('')}
@@ -885,21 +898,42 @@ function openFeeWaiverDrawer() {
   }).join('');
 
   drawer.innerHTML = `
-    <div style="padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin:0; font-size:1.25rem;">Fee Waiver Management</h3>
-        <button id="close-fee-drawer" style="background:#374151; border:none; color:white; padding:6px 12px; border-radius:999px; cursor:pointer;">
+    <div style="padding: 24px;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="margin:0; font-size:1.35rem; font-weight:600;">Fee Waiver Management</h3>
+        <button id="close-fee-drawer" style="
+          background: var(--delete-bg);
+          border: 1px solid var(--border);
+          color: var(--text);
+          padding: 8px 16px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 500;
+        ">
           Close
         </button>
       </div>
 
-      <div style="background:#1e293b; color:#cbd5e1; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-size:0.9rem; line-height:1.4;">
-        User fee waivers apply to <strong>all loans</strong> owned by the user.<br>
-        Per-loan fee waivers (overrides) can be set directly in the loan table.<br>
-        <strong>Save changes</strong> on the main page to apply updates.
+      <!-- Explanation -->
+      <div style="
+        background: color-mix(in srgb, var(--card) 85%, var(--muted) 15%);
+        color: var(--muted);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        font-size: 0.94rem;
+        line-height: 1.55;
+        border: 1px solid var(--border);
+      ">
+        <strong style="color: var(--text);">User fee waivers</strong> apply to <strong>all loans</strong> owned by the user.<br>
+        <strong>Per-loan fee waivers (overrides)</strong> can be set directly in the loan table.<br><br>
+        <strong>Remember to click "Save Changes"</strong> on the main page to apply updates.
       </div>
 
-      <div style="padding: 0 4px;">
+      <!-- Radio sections -->
+      <div style="display: flex; flex-direction: column; gap: 32px;">
         ${radioGroups}
       </div>
     </div>
@@ -907,13 +941,47 @@ function openFeeWaiverDrawer() {
 
   document.body.appendChild(drawer);
 
-  // ─── Event listeners ──────────────────────────────────────
+  // Custom radio styling (no green box, clean look)
+  const style = document.createElement('style');
+  style.textContent = `
+    #fee-waiver-drawer input[type="radio"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--muted);
+      border-radius: 50%;
+      background: var(--input-bg);
+      margin: 0;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.12s ease;
+    }
+    #fee-waiver-drawer input[type="radio"]:checked {
+      border-color: var(--green);
+      background: var(--green);
+      box-shadow: inset 0 0 0 5px var(--card);
+    }
+    #fee-waiver-drawer input[type="radio"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 30%, transparent);
+    }
+  `;
+  drawer.appendChild(style);
+
+  // Event listeners
   drawer.querySelectorAll('input[type="radio"]').forEach(radio => {
     radio.addEventListener('change', () => {
       const userId = radio.name.replace('fee-', '');
       const value = radio.value;
       userFeeWaivers[userId] = value;
-      markDirty();           // ← makes Save Changes button active
+      markDirty();
+
+      // Visual feedback: bold selected label
+      drawer.querySelectorAll(`label[for^="fee-${userId}-"]`).forEach(lbl => {
+        const isThis = lbl.htmlFor.endsWith(value);
+        lbl.style.fontWeight = isThis ? '500' : 'normal';
+        lbl.style.color = isThis ? 'var(--text)' : 'var(--muted)';
+      });
     });
   });
 
