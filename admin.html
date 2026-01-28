@@ -1374,28 +1374,44 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
 async function loadFromBackend() {
   try {
     const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
-    if (!res.ok) throw new Error("Load failed");
-    
-    const data = await res.json();
-    currentLoans = data.loans || [];
-    currentSha = data.sha;
-    
-    // Load platformConfig (adjust if separate endpoint)
-    platformConfig = {
-      fees: data.fees || { setupFee: 150, monthlyServicingBps: 25 },
-      users: data.users || [],
-      sha: data.sha || currentSha
-    };
+    if (!res.ok) throw new Error(`Load failed: ${res.status}`);
 
-    // Sync userFeeWaivers from platformConfig.users
+    const data = await res.json();
+
+    // Load loans
+    currentLoans = data.loans || [];
+    currentSha = data.sha || null;
+
+    // Load platformConfig (this is key!)
+    if (data.platformConfig) {
+      platformConfig = {
+        fees: data.platformConfig.fees || { setupFee: 150, monthlyServicingBps: 25 },
+        users: data.platformConfig.users || [],
+        sha: data.platformConfig.sha || currentSha
+      };
+    } else {
+      // Fallback if backend doesn't return it yet — load from a separate endpoint or hardcoded
+      console.warn("platformConfig not in response — using fallback");
+      platformConfig = {
+        fees: { setupFee: 150, monthlyServicingBps: 25 },
+        users: [
+          { id: "jeff", name: "Jeff", role: "lender", feeWaiver: "none", active: true },
+          { id: "nick", name: "Nick", role: "lender", feeWaiver: "all", active: true },
+          { id: "john", name: "John", role: "investor", feeWaiver: "none", active: true }
+        ],
+        sha: currentSha
+      };
+    }
+
+    // Sync userFeeWaivers from loaded platformConfig.users
     userFeeWaivers = {};
     platformConfig.users.forEach(u => {
-      if (u.id && u.feeWaiver) {
+      if (u.id && u.feeWaiver !== undefined) {
         userFeeWaivers[u.id] = u.feeWaiver;
       }
     });
 
-    // Fill defaults for missing users
+    // Fill defaults for any missing users
     USER_OPTIONS.forEach(opt => {
       if (!(opt.value in userFeeWaivers)) {
         userFeeWaivers[opt.value] = 'none';
@@ -1405,6 +1421,7 @@ async function loadFromBackend() {
     renderTable();
   } catch (err) {
     console.error("Load error:", err);
+    // Optional: show error UI
   }
 }
 
