@@ -438,6 +438,7 @@ input:focus, select:focus {
   let platformConfig = null;
   let currentSha = null;
   let platformConfigSha = null;
+  let platformConfig = { fees: { setupFee: 150, monthlyServicingBps: 25 }, users: [] };
   
 // Fee waiver drawer state
 let feeDrawerOpen = false;
@@ -960,16 +961,19 @@ function openFeeWaiverDrawer() {
     position: fixed;
     top: 0;
     right: 0;
-    width: 480px;
+    width: 500px;
     height: 100%;
     background: var(--card);
-    box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+    box-shadow: -8px 0 30px rgba(0,0,0,0.3);
     z-index: 1000;
     overflow-y: auto;
     color: var(--text);
+    transition: transform 0.3s ease;
+    transform: translateX(100%);
   `;
+  setTimeout(() => { drawer.style.transform = "translateX(0)"; }, 10);
 
-  // Ensure defaults exist
+  // Ensure user defaults exist
   USER_OPTIONS.forEach(u => {
     if (!(u.value in userFeeWaivers)) {
       userFeeWaivers[u.value] = 'none';
@@ -977,42 +981,41 @@ function openFeeWaiverDrawer() {
   });
 
   const waiverOptions = [
-    { value: 'none',           label: 'None' },
-    { value: 'all',            label: 'All Fees' },
-    { value: 'setup',          label: 'Setup Only' },
-    { value: 'setup_grace',    label: 'Setup + Grace/Deferral' },
-    { value: 'grace_deferral', label: 'Grace/Deferral Only' },
+    { value: 'none',          label: 'None' },
+    { value: 'all',           label: 'All Fees Waived' },
+    { value: 'setup',         label: 'Setup Fee Only Waived' },
+    { value: 'setup_grace',   label: 'Setup + Grace/Deferral Waived' },
+    { value: 'grace_deferral',label: 'Grace/Deferral Only Waived' },
   ];
 
+  // Build user waiver radio groups (your existing logic, slightly cleaned)
   const radioGroups = USER_OPTIONS.map(user => {
-    const current = userFeeWaivers[user.value];
+    const current = userFeeWaivers[user.value] || 'none';
     return `
-      <div style="padding-bottom: 28px; border-bottom: 1px solid var(--border);">
-        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 16px;">
-          ${user.label} <span style="color: var(--muted); font-size: 0.9rem; font-weight: normal;">(${user.value})</span>
+      <div style="padding: 20px 0; border-bottom: 1px solid var(--border);">
+        <div style="font-weight: 600; font-size: 1.15rem; margin-bottom: 16px;">
+          ${user.label} <span style="color: var(--muted); font-size: 0.9rem;">(${user.value})</span>
         </div>
         <div style="display: grid; grid-template-columns: 28px 1fr; gap: 12px 16px; align-items: center;">
           ${waiverOptions.map(opt => {
             const id = `fee-${user.value}-${opt.value}`;
             const isSelected = current === opt.value;
             return `
-              <div style="justify-self: center;">
-                <input type="radio" 
-                  name="fee-${user.value}" 
-                  value="${opt.value}" 
-                  id="${id}"
-                  ${isSelected ? 'checked' : ''}
-                  style="margin:0;"
-                />
-              </div>
+              <input type="radio"
+                name="fee-${user.value}"
+                value="${opt.value}"
+                id="${id}"
+                ${isSelected ? 'checked' : ''}
+                style="margin:0; width:20px; height:20px;"
+              />
               <label for="${id}" style="
-  cursor: pointer;
-  font-size: 0.98rem;
-  color: ${isSelected ? 'var(--green)' : 'var(--muted)'};
-  font-weight: ${isSelected ? '500' : 'normal'};
-">
-  ${opt.label} ${isSelected && current !== 'none' ? '<span style="font-size:0.85rem; opacity:0.8;">(active)</span>' : ''}
-</label>
+                cursor: pointer;
+                font-size: 0.98rem;
+                color: ${isSelected ? 'var(--green)' : 'var(--muted)'};
+                font-weight: ${isSelected ? '500' : 'normal'};
+              ">
+                ${opt.label} ${isSelected && current !== 'none' ? '<span style="font-size:0.85rem; opacity:0.8;">(active)</span>' : ''}
+              </label>
             `;
           }).join('')}
         </div>
@@ -1021,50 +1024,66 @@ function openFeeWaiverDrawer() {
   }).join('');
 
   drawer.innerHTML = `
-    <div style="padding: 24px;">
+    <div style="padding: 28px;">
       <!-- Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h3 style="margin:0; font-size:1.35rem; font-weight:600;">Fee Waiver Management</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+        <h2 style="margin:0; font-size:1.5rem; font-weight:600;">Fee Management</h2>
         <button id="close-fee-drawer" style="
           background: var(--delete-bg);
           border: 1px solid var(--border);
           color: var(--text);
-          padding: 8px 16px;
+          padding: 10px 20px;
           border-radius: 999px;
           cursor: pointer;
           font-size: 0.95rem;
-          font-weight: 500;
-        ">
-          Close
-        </button>
+        ">Close</button>
       </div>
 
-      <!-- Explanation -->
-      <div style="
-        background: color-mix(in srgb, var(--card) 85%, var(--muted) 15%);
-        color: var(--muted);
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 32px;
-        font-size: 0.94rem;
-        line-height: 1.55;
-        border: 1px solid var(--border);
-      ">
-        <strong style="color: var(--text);">User fee waivers</strong> apply to <strong>all loans</strong> owned by the user.<br>
-        <strong>Per-loan fee waivers (overrides)</strong> can be set directly in the loan table.<br><br>
-        <strong>Remember to click "Save Changes"</strong> on the main page to apply updates.
-      </div>
+      <!-- Global Platform Fees -->
+      <section style="margin-bottom: 36px;">
+        <h3 style="margin:0 0 16px; font-size:1.2rem; font-weight:600;">Platform Fees</h3>
+        <div style="display: grid; gap: 20px;">
+          <label style="display: block;">
+            <span style="display: block; font-weight:500; margin-bottom: 8px;">Setup Fee (one-time per lot)</span>
+            <input type="number" id="global-setup-fee" value="${platformConfig?.fees?.setupFee || 150}"
+                   min="0" step="10" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); color:var(--text); font-size:1rem;">
+          </label>
+          <label style="display: block;">
+            <span style="display: block; font-weight:500; margin-bottom: 8px;">Monthly Servicing Fee (basis points)</span>
+            <input type="number" id="global-monthly-bps" value="${platformConfig?.fees?.monthlyServicingBps || 25}"
+                   min="0" max="1000" step="5" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); color:var(--text); font-size:1rem;">
+            <small style="color:var(--muted); display:block; margin-top:6px;">25 bps = 0.25% annual servicing fee</small>
+          </label>
+        </div>
+      </section>
 
-      <!-- Radio sections -->
-      <div style="display: flex; flex-direction: column; gap: 32px;">
-        ${radioGroups}
+      <!-- User Waivers -->
+      <section>
+        <h3 style="margin:0 0 20px; font-size:1.2rem; font-weight:600;">User Fee Waivers</h3>
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          ${radioGroups}
+        </div>
+      </section>
+
+      <!-- Footer Actions -->
+      <div style="margin-top: 40px; text-align: right;">
+        <button id="drawer-save" style="
+          background: var(--green);
+          color: white;
+          border: none;
+          padding: 12px 28px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: 600;
+        ">Save Changes</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(drawer);
 
-  // Custom radio styling (no green box, clean look)
+  // ── Custom radio styling (your original, preserved) ──
   const style = document.createElement('style');
   style.textContent = `
     #fee-waiver-drawer input[type="radio"] {
@@ -1074,9 +1093,7 @@ function openFeeWaiverDrawer() {
       border: 2px solid var(--muted);
       border-radius: 50%;
       background: var(--input-bg);
-      margin: 0;
       cursor: pointer;
-      position: relative;
       transition: all 0.12s ease;
     }
     #fee-waiver-drawer input[type="radio"]:checked {
@@ -1091,7 +1108,8 @@ function openFeeWaiverDrawer() {
   `;
   drawer.appendChild(style);
 
-  // Event listeners
+  // ── Event listeners ──
+  // Radio changes → update in-memory map + visual feedback
   drawer.querySelectorAll('input[type="radio"]').forEach(radio => {
     radio.addEventListener('change', () => {
       const userId = radio.name.replace('fee-', '');
@@ -1099,7 +1117,7 @@ function openFeeWaiverDrawer() {
       userFeeWaivers[userId] = value;
       markDirty();
 
-      // Visual feedback: bold selected label
+      // Update label styles
       drawer.querySelectorAll(`label[for^="fee-${userId}-"]`).forEach(lbl => {
         const isThis = lbl.htmlFor.endsWith(value);
         lbl.style.fontWeight = isThis ? '500' : 'normal';
@@ -1108,9 +1126,51 @@ function openFeeWaiverDrawer() {
     });
   });
 
+  // Close
   drawer.querySelector("#close-fee-drawer").onclick = () => {
-    drawer.remove();
-    feeDrawerOpen = false;
+    drawer.style.transform = "translateX(100%)";
+    setTimeout(() => drawer.remove(), 300);
+  };
+
+  // Save
+  drawer.querySelector("#drawer-save").onclick = () => {
+    // Update global fees
+    const setupInput = document.getElementById("global-setup-fee");
+    const bpsInput   = document.getElementById("global-monthly-bps");
+    const newSetup = parseInt(setupInput.value, 10);
+    const newBps   = parseInt(bpsInput.value, 10);
+
+    if (!isNaN(newSetup) && newSetup >= 0) {
+      platformConfig.fees.setupFee = newSetup;
+    } else {
+      alert("Setup Fee must be a non-negative number.");
+      return;
+    }
+    if (!isNaN(newBps) && newBps >= 0) {
+      platformConfig.fees.monthlyServicingBps = newBps;
+    } else {
+      alert("Monthly BPS must be a non-negative number.");
+      return;
+    }
+
+    // User waivers already updated in userFeeWaivers on radio change
+    // Sync back to platformConfig.users for persistence
+    platformConfig.users.forEach(u => {
+      if (u.id in userFeeWaivers) {
+        u.feeWaiver = userFeeWaivers[u.id];
+      }
+    });
+
+    markDirty();
+    saveToBackend();  // your main save function – it handles config save
+
+    // Feedback & close
+    const status = document.getElementById("status");
+    if (status) status.textContent = "Fee settings saved!";
+    setTimeout(() => {
+      drawer.style.transform = "translateX(100%)";
+      setTimeout(() => drawer.remove(), 300);
+    }, 800);
   };
 }
 
@@ -1374,22 +1434,29 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
 
 async function loadFromBackend() {
   try {
-    // 1️⃣ Load loans from /loans
+    // 1️⃣ Load loans from API
     const loansRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
-    if (!loansRes.ok) throw new Error("Loans fetch failed");
+    if (!loansRes.ok) {
+      throw new Error(`Loans fetch failed: ${loansRes.status} ${loansRes.statusText}`);
+    }
     const loansData = await loansRes.json();
-
     currentLoans = loansData.loans || [];
     currentSha = loansData.sha || null;
 
-    // 2️⃣ Load platform config from /platformConfig
+    // 2️⃣ Load platform config — try API first, fallback to raw GitHub
     let configData = null;
+    try {
+      const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
+      if (configRes.ok) {
+        configData = await configRes.json();
+      }
+    } catch (apiErr) {
+      console.warn("platformConfig API failed:", apiErr);
+    }
 
-    const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
-    if (configRes.ok) {
-      configData = await configRes.json();
-    } else {
-      console.warn("platformConfig endpoint failed, trying direct file...");
+    if (!configData) {
+      // Fallback: direct GitHub raw file (no auth needed)
+      console.warn("Trying direct GitHub fallback for platformConfig...");
       const directRes = await fetch(
         "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
       );
@@ -1398,17 +1465,18 @@ async function loadFromBackend() {
       }
     }
 
-    // 3️⃣ Normalize + STORE SHA SEPARATELY
+    // 3️⃣ Assign to global platformConfig with safe defaults
     if (configData) {
       platformConfig = {
-        fees: configData.fees || { setupFee: 150, monthlyServicingBps: 25 },
-        users: configData.users || []
+        fees: {
+          setupFee: Number(configData.fees?.setupFee) || 150,
+          monthlyServicingBps: Number(configData.fees?.monthlyServicingBps) || 25
+        },
+        users: Array.isArray(configData.users) ? configData.users : []
       };
-
-      platformConfigSha = configData.sha || null; // ✅ IMPORTANT
+      platformConfigSha = configData.sha || null;
     } else {
-      console.warn("No platformConfig loaded — using fallback");
-
+      console.warn("No valid platformConfig found — falling back to hardcoded defaults");
       platformConfig = {
         fees: { setupFee: 150, monthlyServicingBps: 25 },
         users: [
@@ -1417,28 +1485,33 @@ async function loadFromBackend() {
           { id: "john", name: "John", role: "investor", feeWaiver: "none", active: true }
         ]
       };
-
-      platformConfigSha = null; // fallback has no SHA
+      platformConfigSha = null;
     }
 
-    // 4️⃣ Sync userFeeWaivers from loaded users
+    // 4️⃣ Sync userFeeWaivers map (used elsewhere in the app)
     userFeeWaivers = {};
     platformConfig.users.forEach(u => {
-      if (u.id && u.feeWaiver !== undefined) {
+      if (u?.id && u.feeWaiver !== undefined) {
         userFeeWaivers[u.id] = u.feeWaiver;
       }
     });
 
+    // Ensure every known user option has at least "none" (defensive)
     USER_OPTIONS.forEach(opt => {
       if (!(opt.value in userFeeWaivers)) {
         userFeeWaivers[opt.value] = "none";
       }
     });
 
-    renderTable();
+    // Optional: log success for debugging
+    console.log("Loaded platform config:", platformConfig.fees);
 
+    renderTable();
   } catch (err) {
-    console.error("Load error:", err);
+    console.error("Full backend load failed:", err);
+    // Optional: show UI feedback
+    const statusEl = document.getElementById("status");
+    if (statusEl) statusEl.textContent = "Failed to load data – check console";
   }
 }
 
