@@ -1,6 +1,6 @@
 {
   "fees": {
-    "setupFee": 152,
+    "setupFee": 150,
     "monthlyServicingBps": 25
   },
   "users": [
@@ -26,5 +26,5 @@
       "active": true
     }
   ],
-  "sha": "21ed105be25916029c586d3a7907f48e0919bd4f"
+  "sha": "f7d58662771c90cd92378a3777fe3ee18df3fedc"
 }
