@@ -746,7 +746,9 @@ function openEventsDrawer(loan) {
   });
 
   // Add prepayment
-  drawer.querySelector("#add-prepay-btn")?.onclick = () => {
+  const addPrepayBtn = drawer.querySelector("#add-prepay-btn");
+if (addPrepayBtn) {
+  addPrepayBtn.onclick = () => {
     const date = drawer.querySelector("#prepay-date").value;
     const amount = Number(drawer.querySelector("#prepay-amount").value);
     if (!date || amount <= 0 || isNaN(amount)) {
@@ -766,9 +768,12 @@ function openEventsDrawer(loan) {
     openEventsDrawer(loan);
     renderTable();
   };
+}
 
   // Add deferral
-  drawer.querySelector("#add-deferral-btn")?.onclick = () => {
+  const addDeferralBtn = drawer.querySelector("#add-deferral-btn");
+if (addDeferralBtn) {
+addDeferralBtn.onclick = () => {
     const startDate = drawer.querySelector("#defer-start").value;
     const months = Number(drawer.querySelector("#defer-months").value);
     if (!startDate || months <= 0 || isNaN(months)) {
@@ -788,9 +793,12 @@ function openEventsDrawer(loan) {
     openEventsDrawer(loan);
     renderTable();
   };
+}
 
   // Add default
-  drawer.querySelector("#add-default-btn")?.onclick = () => {
+  const addDefaultBtn = drawer.querySelector("#add-default-btn");
+if (addDefaultBtn) {
+addDefaultBtn.onclick = () => {
     const date = drawer.querySelector("#default-date").value;
     const recoveryAmount = Number(drawer.querySelector("#default-recovery").value);
     if (!date || recoveryAmount < 0 || isNaN(recoveryAmount)) {
@@ -814,6 +822,7 @@ function openEventsDrawer(loan) {
     openEventsDrawer(loan);
     renderTable();
   };
+}
 }
 
 function openOwnershipDrawer(loan) {
