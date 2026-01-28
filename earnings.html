@@ -4501,7 +4501,7 @@ function renderLoanTable(loans) {
         }
       });
 
-      badge.addEventListener('mouseleave', hideTooltip);
+      badge.addEventListener('mouseleave', () => hideTooltip());
     });
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
