@@ -1396,6 +1396,7 @@ import {
   getUserOwnershipPct
 } from "./ownershipEngine.js?v=dev";
 
+  import { loadPlatformConfig } from "./platformConfig.js?v=dev";
 
 let earningsDataReadyResolve;
 const earningsDataReady = new Promise(resolve => {
@@ -4657,7 +4658,20 @@ function updateSortSelectFromTable(key, dir) {
 
 
 async function initPage() {
-  // 1️⃣ Load + normalize data (updated)
+try {
+    // Load platform config first (fees + users + waivers)
+    await loadPlatformConfig("https://jeff-stratofied.github.io/loanreporting//data/platformConfig.json");
+    
+    console.log("Platform config loaded successfully:", {
+      setupFee: GLOBAL_FEE_CONFIG?.setupFee,
+      monthlyBps: GLOBAL_FEE_CONFIG?.monthlyServicingBps,
+      userCount: Object.keys(USERS || {}).length
+    });
+  } catch (err) {
+    console.error("Failed to load platform config:", err);
+    // Optional: fallback to defaults already in loanEngine.js
+  }
+  
   await loadLoansFromBackend();                     // ← now normalized + scheduled
 
   // Rebuild earnings-specific derived data (should now work better)
