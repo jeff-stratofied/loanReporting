@@ -4489,19 +4489,25 @@ function renderLoanTable(loans) {
     const badges = tr.querySelectorAll('.event-badge');
     badges.forEach(badge => {
       badge.addEventListener('mouseenter', (e) => {
-        const eventJson = badge.dataset.event;
-        if (eventJson) {
-          try {
+        try {
+          const eventJson = badge.dataset.event;
+          if (eventJson) {
             const event = JSON.parse(eventJson);
             const text = getEventBadgeTooltip(event);  // your tooltip function
             if (text) showTooltip(e, text);
-          } catch (err) {
-            console.warn("Failed to parse event for tooltip", err);
           }
+        } catch (err) {
+          console.warn("Failed to show tooltip", err);
         }
       });
 
-      badge.addEventListener('mouseleave', () => hideTooltip());
+      badge.addEventListener('mouseleave', () => {
+        try {
+          hideTooltip();
+        } catch (err) {
+          console.warn("Failed to hide tooltip", err);
+        }
+      });
     });
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
