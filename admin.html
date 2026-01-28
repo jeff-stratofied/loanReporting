@@ -1476,6 +1476,7 @@ async function loadFromBackend() {
 
 /* Save to Worker */
 async function saveToBackend() {
+  const status = document.getElementById("status") || { textContent: "" };
   status.textContent = "Saving…";
 
   const updated = collectLoans();
@@ -1554,69 +1555,71 @@ async function saveToBackend() {
   }
 
   // =====================================================
-  // SAVE LOANS (existing)
+  // SAVE LOANS
   // =====================================================
-  let loansSaved = false;
   try {
     const loansRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        loans: updated,
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ loans: updated })
     });
+    if (!loansRes.ok) {
+      const err = await loansRes.json();
+      throw err;
+    }
     const loansData = await loansRes.json();
-    if (!loansRes.ok) throw loansData;
     currentSha = loansData.sha;
-    loansSaved = true;
   } catch (err) {
     console.error("Loans save failed:", err);
     status.textContent = "Loans save failed";
     return;
   }
 
-// =====================================================
-// SAVE PLATFORM CONFIG (always – fees + waivers must persist)
-// =====================================================
-try {
-  const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  // =====================================================
+  // SAVE PLATFORM CONFIG — with FRESH SHA fetch first
+  // =====================================================
+  try {
+    // Always get latest SHA before saving config (fixes stale SHA / 409)
+    const freshConfigRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
+    let freshSha = null;
+    if (freshConfigRes.ok) {
+      const freshData = await freshConfigRes.json();
+      freshSha = freshData.sha;
+    } else {
+      console.warn("Could not fetch fresh config SHA, proceeding with known SHA");
+    }
+
+    const configBody = {
       fees: platformConfig.fees,
       users: platformConfig.users,
-      sha: platformConfigSha
-    })
-  });
+      sha: freshSha || platformConfigSha  // prefer fresh, fallback to old
+    };
 
-  const configData = await configRes.json();
-  if (!configRes.ok) throw configData;
+    const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(configBody)
+    });
 
-  if (configData.sha) {
-    platformConfigSha = configData.sha;
+    if (!configRes.ok) {
+      const errData = await configRes.json();
+      throw new Error(`Config save failed: ${JSON.stringify(errData)}`);
+    }
+
+    const configData = await configRes.json();
+    if (configData.sha) {
+      platformConfigSha = configData.sha;
+    }
+  } catch (err) {
+    console.error("Platform config save failed:", err);
+    status.textContent = "Config save failed (fees/waivers may not have saved)";
+    // Do NOT return — allow loans to be considered saved
   }
-
-} catch (err) {
-  console.error("Config save failed:", err);
-  status.textContent = "Config save failed (fees/waivers may not persist)";
-  return;
-}
 
   // Success
   status.textContent = "Saved ✔";
   clearDirty();
 }
-
-
-  /* Buttons */
- document.getElementById("add-row").onclick = () => {
-  currentLoans.push(normalizeLoan({}, currentLoans.length));
-  renderTable();
-  markDirty();   // ✅ REQUIRED
-};
-
-
-  document.getElementById("save-btn").onclick = saveToBackend;
 
   // =====================================================
 // GLOBAL DIRTY TRACKING FOR TABLE EDITS
