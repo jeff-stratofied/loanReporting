@@ -238,7 +238,8 @@ export async function loadLoans() {
       ownershipLots: Array.isArray(l.ownershipLots) ? l.ownershipLots : [],
       // Optional fallback fields (in case legacy loans use them)
       owner: l.owner || null,
-      user: l.user || null
+      user: l.user || null,
+      feeWaiver: l.feeWaiver || "none"  // NEW: Normalize loan fee waiver
     };
   });
 }
