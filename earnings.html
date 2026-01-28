@@ -4488,33 +4488,56 @@ function renderLoanTable(loans) {
     // Attach hover listeners to each badge after it's in the DOM
     const badges = tr.querySelectorAll('.event-badge');
     badges.forEach(badge => {
-  badge.addEventListener("mouseenter", (e) => {
-    try {
-      const eventJson = badge.dataset.event;
-      if (eventJson) {
-        const event = JSON.parse(eventJson);
-        const text = getEventBadgeTooltip(event);
-        if (text) showTooltip(e, text);
-      }
+badge.addEventListener("mouseenter", (e) => {
+  try {
+    const eventJson = badge.dataset.event;
+    if (!eventJson) return;
 
-      // 🔑 MATCH AMORT: highlight row when badge is hovered
-      tr.classList.add("row-hover");
+    const event = JSON.parse(eventJson);
 
-    } catch (err) {
-      console.warn("Failed to show tooltip", err);
-    }
-  });
+    const lines = [];
 
-  badge.addEventListener("mouseleave", () => {
-    try {
-      hideTooltip();
-    } catch (err) {
-      console.warn("Failed to hide tooltip", err);
+    if (event.type === "prepayment") {
+      lines.push(
+        "Prepayment",
+        `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
+        `Amount: ${formatCurrency(event.amount)}`
+      );
     }
 
-    // 🔑 MATCH AMORT: remove highlight on leave
-    tr.classList.remove("row-hover");
-  });
+    if (event.type === "default") {
+      lines.push(
+        "Default",
+        `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`,
+        `Recovered: ${formatCurrency(event.recovered ?? 0)}`
+      );
+    }
+
+    if (event.type === "deferral") {
+      lines.push(
+        "Deferral",
+        `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`,
+        `Months: ${event.months}`
+      );
+    }
+
+    if (!lines.length) return;
+
+    // ✅ Earnings canonical tooltip system
+    setMiniTooltipContent(lines);
+    positionMiniTooltip(e.clientX, e.clientY - 8, 16);
+
+    // ✅ MATCH AMORT: highlight row on badge hover
+    tr.classList.add("row-hover");
+
+  } catch (err) {
+    console.warn("Failed to show tooltip", err);
+  }
+});
+
+badge.addEventListener("mouseleave", () => {
+  hideMiniTooltip();
+  tr.classList.remove("row-hover");
 });
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
