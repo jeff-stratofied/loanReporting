@@ -499,17 +499,6 @@
       transition:background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
     }
 
-/* Grey out months before ownership */
-tr.pre-ownership,
-tr.pre-ownership td {
-  color: #9aa3af;  /* Grey text */
-}
-
-/* Green divider for purchase month */
-tr.purchase-month td {
-  border-top: 3px solid #22c55e;  /* Thinner line, match old inline color */
-}
-    
 /* =========================================
    KPI table hover — ONLY interactive KPIs
    (KPI 2 + KPI 4)
@@ -3637,9 +3626,11 @@ function openDrawerForLoan(loan) {
   // =====================================================
   currentMode = "loan";
   currentLoan = loan;
+
   // 🔑 reset amort view every time
   amortViewMode = "loan";
   updateAmortViewButtons();
+
   const amortToggle = document.getElementById("amortViewToggle");
   if (amortToggle) amortToggle.hidden = false;
 
@@ -3647,6 +3638,7 @@ function openDrawerForLoan(loan) {
   // Header
   // ------------------------------------
   drawerTitle.textContent = loan.name || loan.loanName;
+
   drawerSub.innerHTML = `
     <div>${loan.school || ""}</div>
     <div>
@@ -3663,65 +3655,21 @@ function openDrawerForLoan(loan) {
   const investedCapital = (loan.ownershipLots || [])
     .filter(l => l.user === PAGE_CONTEXT.user)
     .reduce((sum, l) => sum + (Number(l.pricePaid) || 0), 0);
+
   drawerPrimaryTitle.textContent = "Invested Capital";
   drawerPrimary.textContent = `$${Math.round(investedCapital).toLocaleString()}`;
+
   drawerSecondaryTitle.textContent = "Rate";
   drawerSecondary.textContent = `${(loan.nominalRate * 100).toFixed(2)}%`;
 
   // ----------------------------------
-  // Amort - with ownership visual cues
+  // Amort
   // ----------------------------------
   drawerAmortContainer.style.display = "block";
   amortBody.innerHTML = "";
 
-  // Helper: calculate which schedule row is the first owned month
-  function getPurchaseMonthIndex() {
-    if (!loan.purchaseDate) return 0; // fallback: no greying / no green line
-
-    const purchase = new Date(loan.purchaseDate);
-    purchase.setDate(1); // normalize to month start
-
-    // Assume loan has origination date; fallback to month 0 if missing
-    const origination = loan.loanStartDate ? new Date(loan.loanStartDate) : new Date(purchase);
-    origination.setDate(1);
-
-    const monthsDiff =
-      (purchase.getFullYear() - origination.getFullYear()) * 12 +
-      (purchase.getMonth() - origination.getMonth());
-
-    return Math.max(0, monthsDiff);
-  }
-
-  const ownershipStartIndex = getPurchaseMonthIndex();
-
-  // 🔑 single source of truth – now with ownership styling
- /* delete
-  renderAmortForLoan(loan, ownershipStartIndex);   // ← pass index if renderAmortForLoan accepts it
-*/
-  // If renderAmortForLoan does NOT accept extra params, use this version instead:
-  
-  loan.amort.schedule.forEach((r, index) => {
-    const tr = document.createElement("tr");
-
-    // Add ownership classes
-    if (index < ownershipStartIndex) {
-      tr.classList.add("pre-ownership");       // grey text
-    }
-    if (index === ownershipStartIndex) {
-      tr.classList.add("purchase-month");      // green horizontal line
-    }
-
-    tr.innerHTML = `
-      <td style="text-align:left">${formatDateForMonthIndex(r.monthIndex)}</td>
-      <td style="text-align:right">${formatCurrency(r.payment)}</td>
-      <td style="text-align:right">${formatCurrency(r.principalPaid)}</td>
-      <td style="text-align:right">${formatCurrency(r.interest)}</td>
-      <td style="text-align:right">${formatCurrency(r.balance)}</td>
-    `;
-
-    amortBody.appendChild(tr);
-  });
-  
+  // 🔑 single source of truth
+  renderAmortForLoan(loan);
 
   // ----------------------------------
   // Open drawer
