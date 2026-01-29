@@ -114,7 +114,13 @@ const monthlyRate = (GLOBAL_FEE_CONFIG?.monthlyServicingBps ?? 25) / 10000;
 
 // Waiver flags for this user (loan override not yet supported here)
 const userObj = USERS[user] || { feeWaiver: "none" };
-const { waiveSetup, waiveMonthly, waiveAll } = resolveFeeWaiverFlags(userObj, {});
+const resolvedUser =
+  USERS?.[userObj.id] ||
+  USERS?.[userObj.userId] ||
+  userObj;
+
+const { waiveSetup, waiveMonthly, waiveAll } =
+  resolveFeeWaiverFlags(resolvedUser, {});
  
   // ----------------------------------------------------------
   // Normalize amort rows with ownership + calendar dates
