@@ -4627,7 +4627,7 @@ async function initPage() {
     // 1️⃣ Load platform config (fees + users + waivers)
     // IMPORTANT: loadPlatformConfig RETURNS the config
     const platformConfig = await loadPlatformConfig(
-      "https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json"
+      "https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json?ts=${Date.now()"
     );
 
     // 2️⃣ Apply platform config to loanEngine globals (explicit + safe)
