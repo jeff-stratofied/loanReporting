@@ -119,6 +119,12 @@ const resolvedUser =
   USERS?.[userObj.userId] ||
   userObj;
 
+console.log("Earnings waiver check", {
+  userObj,
+  resolvedUser,
+  feeWaiver: resolvedUser?.feeWaiver
+});
+ 
 const { waiveSetup, waiveMonthly, waiveAll } =
   resolveFeeWaiverFlags(resolvedUser, {});
  
