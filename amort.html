@@ -1660,15 +1660,10 @@ const startIdx = startDate
 
 // PREPAYMENT
 (loan.events || []).forEach(e => {
-  if (e.type === "prepayment") {
-    if (e.date) {
-  const idx = monthIndexFromDate(e.date, schedule);
-  if (idx !== null) {
-    eventByMonth[idx] = "prepayment";
-  }
-}
-    if (row) {
-      eventByMonth[row.monthIndex] = "prepayment";
+  if (e.type === "prepayment" && e.date) {
+    const idx = monthIndexFromDate(e.date, schedule);
+    if (idx !== null) {
+      eventByMonth[idx] = "prepayment";
     }
   }
 });
