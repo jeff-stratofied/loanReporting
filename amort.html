@@ -2101,7 +2101,7 @@ function buildInvestorAmortView(baseSchedule, loan, user) {
   });
 }
 
-    function renderAmortForLoan(loan) {
+function renderAmortForLoan(loan) {
   assert(loan, "renderAmortForLoan called with null loan");
 
   // -------------------------------------
@@ -2113,6 +2113,43 @@ function buildInvestorAmortView(baseSchedule, loan, user) {
     amortViewMode === "investment"
       ? buildInvestorAmortView(baseSchedule, loan, PAGE_CONTEXT.user)
       : baseSchedule;
+
+  // -------------------------------------
+  // EVENT LOOKUP (monthIndex → eventType)
+  // -------------------------------------
+  const eventByMonth = {};
+
+  if (Array.isArray(loan.events)) {
+    loan.events.forEach(e => {
+
+      // DEFERRAL (multi-month)
+      if (e.type === "deferral" && (e.startDate || e.date) && e.months) {
+        const start = e.startDate ?? e.date;
+        const startIdx = monthIndexFromDate(start, baseSchedule);
+        if (Number.isInteger(startIdx)) {
+          for (let i = 0; i < e.months; i++) {
+            eventByMonth[startIdx + i] = "deferral";
+          }
+        }
+      }
+
+      // PREPAYMENT (single month)
+      if (e.type === "prepayment" && e.date) {
+        const idx = monthIndexFromDate(e.date, baseSchedule);
+        if (Number.isInteger(idx)) {
+          eventByMonth[idx] = "prepayment";
+        }
+      }
+
+      // DEFAULT (single month)
+      if (e.type === "default" && e.date) {
+        const idx = monthIndexFromDate(e.date, baseSchedule);
+        if (Number.isInteger(idx)) {
+          eventByMonth[idx] = "default";
+        }
+      }
+    });
+  }
 
   // -------------------------------------
   // TABLE
@@ -2128,6 +2165,11 @@ function buildInvestorAmortView(baseSchedule, loan, user) {
 
   schedule.forEach(row => {
     const tr = document.createElement("tr");
+
+    const eventType = eventByMonth[row.monthIndex];
+    if (eventType) {
+      tr.classList.add(`event-${eventType}`);
+    }
 
     tr.innerHTML = `
       <td>${formatMonthYear(row.loanDate)}</td>
