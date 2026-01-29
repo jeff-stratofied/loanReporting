@@ -940,31 +940,27 @@ function openOwnershipDrawer(loan) {
       Each row is a distinct ownership lot. Percentages must total 100%.
     </div>
 
-    <div id="lot-list">
-      ${renderLots()}
-    </div>
+    <div id="lot-list">${renderLots()}</div>
 
     <button id="add-lot-btn" style="margin-top:8px">+ Add Lot</button>
 
     <hr style="margin:14px 0;border-color:var(--border)">
 
-<div
-  id="ownership-warning"
-  style="display:none;color:#b91c1c;font-size:0.8rem;margin-bottom:10px"
->
-  Ownership must total 100% and include purchase date + buy price.
-</div>
+    <div
+      id="ownership-warning"
+      style="display:none;color:#b91c1c;font-size:0.8rem;margin-bottom:10px"
+    >
+      Ownership must total 100% and include purchase date + buy price.
+    </div>
 
-<button id="ownership-save">Save Ownership</button>
-<button id="close-ownership-btn">Close</button>
-
+    <button id="ownership-save">Save Ownership</button>
     <button id="close-ownership-btn">Close</button>
   `;
 
   document.body.appendChild(drawer);
 
   // -------------------------
-  // Change handlers
+  // Live edits
   // -------------------------
   drawer.addEventListener("input", e => {
     const idx = Number(e.target.dataset.idx);
@@ -1009,6 +1005,35 @@ function openOwnershipDrawer(loan) {
     markDirty();
     drawer.remove();
     openOwnershipDrawer(loan);
+  };
+
+  // -------------------------
+  // SAVE (Phase 3 validation)
+  // -------------------------
+  drawer.querySelector("#ownership-save").onclick = () => {
+    const warningEl = drawer.querySelector("#ownership-warning");
+    warningEl.style.display = "none";
+
+    const lots = loan.ownershipLots;
+    const totalPct = lots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
+
+    const valid =
+      lots.length > 0 &&
+      Math.abs(totalPct - 1) < 0.001 &&
+      lots.every(l =>
+        l.purchaseDate &&
+        Number(l.pricePaid) > 0
+      );
+
+    if (!valid) {
+      warningEl.style.display = "block";
+      return;
+    }
+
+    // ✅ commit + close
+    markDirty();
+    drawer.remove();
+    renderTable();
   };
 
   drawer.querySelector("#close-ownership-btn").onclick = () => {
