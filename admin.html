@@ -415,8 +415,6 @@ input:focus, select:focus {
     <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
     <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
     <th>Waive Fees</th>  
-    <th data-field="purchaseDate" class="sortable cell-date">Purchase Date</th>
-    <th data-field="purchasePrice" class="sortable col-money">Buy Price</th>
     <th>Events</th>
     <th class="col-actions">Actions</th>
   </tr>
@@ -510,6 +508,23 @@ const schoolOptions = [
   "Texas Tech University"
 ];
 
+// ==============================
+// Add Loan button
+// ==============================
+document.getElementById("add-row").addEventListener("click", () => {
+  const newLoan = normalizeLoan({}, 0);
+
+  // Initialize empty ownership
+  newLoan.ownershipLots = [];
+
+  // Add to TOP of table
+  currentLoans.unshift(newLoan);
+
+  renderTable();
+  markDirty();
+});
+
+  
 function openEventsDrawer(loan) {
   const existing = document.getElementById("events-drawer");
   if (existing) existing.remove();
@@ -1378,9 +1393,6 @@ function renderTable() {
   </select>
 </td>
 <!-- Existing cells continue... -->
-<td class="cell-date">
-  <input type="date" data-field="purchaseDate" value="${escapeHtml(loan.purchaseDate || '')}">
-</td>
 
       <td class="col-actions">
         <button
