@@ -1662,9 +1662,6 @@ async function loadFromBackend() {
       }
     });
 
-    // Optional: log success for debugging
-    console.log("Loaded platform config:", platformConfig.fees);
-
     renderTable();
   } catch (err) {
     console.error("Full backend load failed:", err);
@@ -1822,8 +1819,7 @@ async function saveToBackend() {
       if (configData.sha) {
         platformConfigSha = configData.sha;
       }
-      // Optional: confirm success
-      console.log("Platform config saved successfully");
+    
     }
   } catch (err) {
     console.error("Platform config save error:", err);
