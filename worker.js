@@ -1,4 +1,4 @@
-// worker.js — updated for robust platformConfig save + env consistency
+// worker.js — platform API (loans + platformConfig)
 
 function corsHeaders() {
   return {
@@ -10,20 +10,40 @@ function corsHeaders() {
 
 function withCORS(res) {
   const headers = new Headers(res.headers);
-  Object.entries(corsHeaders()).forEach(([k, v]) => headers.set(k, v));
-  headers.set("X-Debug-Worker", "platformConfig-v5");  // Bump version for debug
-  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+
+  Object.entries(corsHeaders()).forEach(([k, v]) =>
+    headers.set(k, v)
+  );
+
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers
+  });
+}
+
+function noStoreJson(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0"
+    }
+  });
 }
 
 const GITHUB_API_BASE = `https://api.github.com/repos`;
 
 async function loadFromGitHub(env, path) {
   const url = `${GITHUB_API_BASE}/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
+
   const res = await fetch(url, {
     headers: {
-      'Authorization': `token ${env.GITHUB_TOKEN}`,
-      'User-Agent': 'Cloudflare-Worker',
-      'Accept': 'application/vnd.github.v3+json'
+      Authorization: `token ${env.GITHUB_TOKEN}`,
+      "User-Agent": "Cloudflare-Worker",
+      Accept: "application/vnd.github.v3+json"
     },
     cache: "no-store"
   });
@@ -34,42 +54,38 @@ async function loadFromGitHub(env, path) {
   }
 
   const data = await res.json();
-  const content = JSON.parse(atob(data.content));
-  return { content, sha: data.sha };
+  return {
+    content: JSON.parse(atob(data.content)),
+    sha: data.sha
+  };
 }
 
-async function saveJsonToGitHub(env, { path, content, message, sha: providedSha }) {
+async function saveJsonToGitHub(env, { path, content, message, sha }) {
   const url = `${GITHUB_API_BASE}/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
+
   const headers = {
-    'Authorization': `token ${env.GITHUB_TOKEN}`,
-    'User-Agent': 'Cloudflare-Worker',
-    'Content-Type': 'application/json',
-    'Accept': 'application/vnd.github.v3+json'
+    Authorization: `token ${env.GITHUB_TOKEN}`,
+    "User-Agent": "Cloudflare-Worker",
+    "Content-Type": "application/json",
+    Accept: "application/vnd.github.v3+json"
   };
 
-  // Always fetch current SHA if not provided (prevents 409 conflicts)
-  let currentSha = providedSha;
-  if (!currentSha) {
+  if (!sha) {
     const getRes = await fetch(url, { headers });
-    if (getRes.status === 404) {
-      currentSha = null;  // New file
-    } else if (!getRes.ok) {
-      const errText = await getRes.text();
-      throw new Error(`GitHub GET for SHA failed: ${getRes.status} - ${errText}`);
-    } else {
-      const getData = await getRes.json();
-      currentSha = getData.sha;
+    if (getRes.ok) {
+      const data = await getRes.json();
+      sha = data.sha;
     }
   }
 
   const body = {
     message,
     content: btoa(content),
-    sha: currentSha || undefined  // omit sha for new files
+    sha
   };
 
   const putRes = await fetch(url, {
-    method: 'PUT',
+    method: "PUT",
     headers,
     body: JSON.stringify(body)
   });
@@ -80,10 +96,8 @@ async function saveJsonToGitHub(env, { path, content, message, sha: providedSha 
   }
 
   const putData = await putRes.json();
-  return new Response(JSON.stringify({ success: true, sha: putData.content.sha }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
+
+  return noStoreJson({ success: true, sha: putData.content.sha });
 }
 
 async function handleFetch(request, env) {
@@ -94,46 +108,64 @@ async function handleFetch(request, env) {
   try {
     const url = new URL(request.url);
 
+    // ----------------------------------
+    // LOANS
+    // ----------------------------------
     if (url.pathname === "/loans") {
       if (request.method === "GET") {
-        const { content, sha } = await loadFromGitHub(env, env.GITHUB_FILE_PATH || "data/loans.json");
-        return withCORS(Response.json({ loans: content.loans || content, sha }));
+        const { content, sha } = await loadFromGitHub(
+          env,
+          env.GITHUB_FILE_PATH || "data/loans.json"
+        );
+
+        return withCORS(
+          noStoreJson({ loans: content.loans || content, sha })
+        );
       }
 
       if (request.method === "POST") {
         const body = await request.json();
-        const contentStr = JSON.stringify({ loans: body.loans }, null, 2);
-        return withCORS(await saveJsonToGitHub(env, {
-          path: env.GITHUB_FILE_PATH || "data/loans.json",
-          content: contentStr,
-          message: "Update loans via admin",
-          sha: body.sha
-        }));
+        return withCORS(
+          await saveJsonToGitHub(env, {
+            path: env.GITHUB_FILE_PATH || "data/loans.json",
+            content: JSON.stringify({ loans: body.loans }, null, 2),
+            message: "Update loans via admin",
+            sha: body.sha
+          })
+        );
       }
 
       return withCORS(new Response("Method not allowed", { status: 405 }));
     }
 
+    // ----------------------------------
+    // PLATFORM CONFIG
+    // ----------------------------------
     if (url.pathname === "/platformConfig") {
-      const configPath = env.GITHUB_CONFIG_PATH || "data/platformConfig.json";  // Use env var for flexibility
+      const configPath =
+        env.GITHUB_CONFIG_PATH || "data/platformConfig.json";
 
       if (request.method === "GET") {
         const { content, sha } = await loadFromGitHub(env, configPath);
-        return withCORS(Response.json({ ...content, sha }));
+        return withCORS(noStoreJson({ ...content, sha }));
       }
 
       if (request.method === "POST") {
         const body = await request.json();
-        // Basic validation: ensure it's an object with fees/users
-        if (!body || typeof body !== 'object' || !body.fees || !body.users) {
-          return withCORS(new Response(JSON.stringify({ error: "Invalid config body" }), { status: 400 }));
+
+        if (!body || typeof body !== "object" || !body.fees || !body.users) {
+          return withCORS(
+            noStoreJson({ error: "Invalid config body" }, 400)
+          );
         }
-        const contentStr = JSON.stringify(body, null, 2);
-        return withCORS(await saveJsonToGitHub(env, {
-          path: configPath,
-          content: contentStr,
-          message: "Update platform config via admin",
-        }));
+
+        return withCORS(
+          await saveJsonToGitHub(env, {
+            path: configPath,
+            content: JSON.stringify(body, null, 2),
+            message: "Update platform config via admin"
+          })
+        );
       }
 
       return withCORS(new Response("Method not allowed", { status: 405 }));
@@ -141,11 +173,13 @@ async function handleFetch(request, env) {
 
     return withCORS(new Response("Not found", { status: 404 }));
   } catch (err) {
-    console.error('Worker error:', err.message, err.stack);
-    return withCORS(new Response(
-      JSON.stringify({ error: err.message, stack: err.stack || 'N/A' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    ));
+    console.error("Worker error:", err);
+    return withCORS(
+      noStoreJson(
+        { error: err.message, stack: err.stack || "N/A" },
+        500
+      )
+    );
   }
 }
 
