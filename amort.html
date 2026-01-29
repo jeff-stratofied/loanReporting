@@ -597,7 +597,7 @@
 /* =========================================
    Amort table event highlights
    ========================================= */
-tr.event-prepay td {
+tr.event-prepayment td {
   background: rgba(34, 197, 94, 0.16); /* green */
 }
 
@@ -1645,10 +1645,10 @@ const eventByMonth = {};
 // DEFERRAL
 (loan.events || []).forEach(e => {
   if (e.type === "deferral" && (e.startDate || e.date) && e.months) {
-    const startIdx = monthIndexFromDate(
-      e.startDate || e.date,
-      schedule
-    );
+    const startDate = e.startDate ?? e.date;
+const startIdx = startDate
+  ? monthIndexFromDate(startDate, schedule)
+  : null;
 
     if (startIdx !== null) {
       for (let i = 0; i < e.months; i++) {
@@ -1661,7 +1661,12 @@ const eventByMonth = {};
 // PREPAYMENT
 (loan.events || []).forEach(e => {
   if (e.type === "prepayment") {
-    const row = schedule.find(r => r.prepayment && r.prepayment > 0);
+    if (e.date) {
+  const idx = monthIndexFromDate(e.date, schedule);
+  if (idx !== null) {
+    eventByMonth[idx] = "prepayment";
+  }
+}
     if (row) {
       eventByMonth[row.monthIndex] = "prepayment";
     }
