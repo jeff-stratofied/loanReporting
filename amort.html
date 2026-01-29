@@ -2927,6 +2927,9 @@ wireLoanTableColumnSort();
 
 function renderLoanTable(loans) {
   const tbody = document.querySelector("#loanTable tbody");
+// 🔑 CLEAR PREVIOUS RENDERS
+tbody.innerHTML = "";
+  
   if (!tbody) return;
 
   tbody.innerHTML = "";
