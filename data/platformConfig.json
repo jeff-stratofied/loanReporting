@@ -8,7 +8,7 @@
       "id": "jeff",
       "name": "Jeff",
       "role": "lender",
-      "feeWaiver": "all",
+      "feeWaiver": "grace_deferral",
       "active": true
     },
     {
@@ -26,5 +26,5 @@
       "active": true
     }
   ],
-  "sha": "74df917300293a1dbd268e74d44bf103399fe9f1"
+  "sha": "39a6b97cbd231361a0d9a65567e86b3286170ea6"
 }
