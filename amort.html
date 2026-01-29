@@ -542,6 +542,21 @@
       transition:background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
     }
 
+    /* ================================
+   AMORT — OWNERSHIP VISUAL CUES
+   ================================ */
+
+/* Grey out months before ownership */
+tr.pre-ownership,
+tr.pre-ownership td {
+  color: #9aa3af;
+}
+
+/* Green divider for purchase month */
+tr.purchase-month td {
+  border-top: 3px solid #16a34a;
+}
+    
     table{ width:100%; border-collapse:collapse; font-size:13px; background:var(--card); transition:color .25s ease; }
     thead th{
       position:sticky; top:0; background:var(--table-header);
@@ -2075,6 +2090,15 @@ function renderAmortForLoan(loan) {
       ? buildInvestorAmortView(baseSchedule, loan, PAGE_CONTEXT.user)
       : baseSchedule;
 
+// -------------------------------------
+// OWNERSHIP MONTH ANCHOR
+// -------------------------------------
+const purchaseDate = new Date(
+  loan.purchasedAt || loan.purchaseDate
+);
+const purchaseMonthKey =
+  purchaseDate.getFullYear() + "-" + purchaseDate.getMonth();
+  
   // -------------------------------------
   // EVENT LOOKUP (monthIndex → eventType)
   // -------------------------------------
@@ -2131,7 +2155,24 @@ function renderAmortForLoan(loan) {
     if (eventType) {
       tr.classList.add(`event-${eventType}`);
     }
+// -------------------------------------
+// ROW OWNERSHIP CLASSIFICATION
+// -------------------------------------
+const rowDate = new Date(row.loanDate || row.date);
+const rowMonthKey =
+  rowDate.getFullYear() + "-" + rowDate.getMonth();
 
+const isPurchaseMonth = rowMonthKey === purchaseMonthKey;
+const isPreOwnership = rowDate < purchaseDate;
+
+  if (isPreOwnership) {
+  tr.classList.add("pre-ownership");
+}
+
+if (isPurchaseMonth) {
+  tr.classList.add("purchase-month");
+}
+    
     tr.innerHTML = `
       <td>${formatMonthYear(row.loanDate)}</td>
       <td style="text-align:right">${formatCurrency(row.payment)}</td>
@@ -2140,6 +2181,13 @@ function renderAmortForLoan(loan) {
       <td style="text-align:right">${formatCurrency(row.balance)}</td>
     `;
 
+if (isPreOwnership) {
+  const cells = tr.querySelectorAll("td");
+  cells[1].textContent = "—"; // payment
+  cells[2].textContent = "—"; // principal
+  cells[3].textContent = "—"; // interest
+}
+    
     amortBody.appendChild(tr);
   });
 
