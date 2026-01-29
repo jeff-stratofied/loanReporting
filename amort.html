@@ -1642,41 +1642,63 @@ const monthAnchor = new Date(
 // =====================================
 const eventByMonth = {};
 
-// DEFERRAL
+// DEFERRAL (multi-month)
 (loan.events || []).forEach(e => {
   if (e.type === "deferral" && (e.startDate || e.date) && e.months) {
     const startDate = e.startDate ?? e.date;
-const startIdx = startDate
-  ? monthIndexFromDate(startDate, schedule)
-  : null;
-
+    const startIdx = monthIndexFromDate(startDate, schedule);
+    
     if (startIdx !== null) {
       for (let i = 0; i < e.months; i++) {
-        eventByMonth[startIdx + i] = "deferral";
-        console.log("Set deferral at index:", startIdx + i);
+        const monthIdx = startIdx + i;
+        eventByMonth[monthIdx] = "deferral";
+        
+        console.log(
+          `DEFERral set at month index ${monthIdx} ` +
+          `(loan ${loan.loanId}, start: ${startDate}, months: ${e.months})`
+        );
       }
+    } else {
+      console.warn(
+        `Deferral index calculation failed for loan ${loan.loanId} ` +
+        `- startDate: ${startDate}, result was null`
+      );
     }
   }
 });
 
-// PREPAYMENT
+// PREPAYMENT (single month)
 (loan.events || []).forEach(e => {
   if (e.type === "prepayment" && e.date) {
     const idx = monthIndexFromDate(e.date, schedule);
     if (idx !== null) {
       eventByMonth[idx] = "prepayment";
-      console.log("Set deferral at index:", startIdx + i);
+      console.log(
+        `PREPAY set at month index ${idx} ` +
+        `(loan ${loan.loanId}, date: ${e.date})`
+      );
+    } else {
+      console.warn(
+        `Prepayment index null for loan ${loan.loanId} - date: ${e.date}`
+      );
     }
   }
 });
 
-// DEFAULT (always wins)
+// DEFAULT (now consistent with the others)
 (loan.events || []).forEach(e => {
   if (e.type === "default" && e.date) {
     const idx = monthIndexFromDate(e.date, schedule);
     if (idx !== null) {
       eventByMonth[idx] = "default";
-      console.log("Set deferral at index:", startIdx + i);
+      console.log(
+        `DEFAULT set at month index ${idx} ` +
+        `(loan ${loan.loanId}, date: ${e.date})`
+      );
+    } else {
+      console.warn(
+        `Default index null for loan ${loan.loanId} - date: ${e.date}`
+      );
     }
   }
 });
