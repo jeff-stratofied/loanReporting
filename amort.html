@@ -1642,63 +1642,33 @@ const monthAnchor = new Date(
 // =====================================
 const eventByMonth = {};
 
-// DEFERRAL (multi-month)
 (loan.events || []).forEach(e => {
+
+  // DEFERRAL (multi-month)
   if (e.type === "deferral" && (e.startDate || e.date) && e.months) {
     const startDate = e.startDate ?? e.date;
     const startIdx = monthIndexFromDate(startDate, schedule);
-    
-    if (startIdx !== null) {
+
+    if (Number.isInteger(startIdx)) {
       for (let i = 0; i < e.months; i++) {
-        const monthIdx = startIdx + i;
-        eventByMonth[monthIdx] = "deferral";
-        
-        console.log(
-          `DEFERral set at month index ${monthIdx} ` +
-          `(loan ${loan.loanId}, start: ${startDate}, months: ${e.months})`
-        );
+        eventByMonth[startIdx + i] = "deferral";
       }
-    } else {
-      console.warn(
-        `Deferral index calculation failed for loan ${loan.loanId} ` +
-        `- startDate: ${startDate}, result was null`
-      );
     }
   }
-});
 
-// PREPAYMENT (single month)
-(loan.events || []).forEach(e => {
+  // PREPAYMENT (single month)
   if (e.type === "prepayment" && e.date) {
     const idx = monthIndexFromDate(e.date, schedule);
-    if (idx !== null) {
+    if (Number.isInteger(idx)) {
       eventByMonth[idx] = "prepayment";
-      console.log(
-        `PREPAY set at month index ${idx} ` +
-        `(loan ${loan.loanId}, date: ${e.date})`
-      );
-    } else {
-      console.warn(
-        `Prepayment index null for loan ${loan.loanId} - date: ${e.date}`
-      );
     }
   }
-});
 
-// DEFAULT (now consistent with the others)
-(loan.events || []).forEach(e => {
+  // DEFAULT (single month)
   if (e.type === "default" && e.date) {
     const idx = monthIndexFromDate(e.date, schedule);
-    if (idx !== null) {
+    if (Number.isInteger(idx)) {
       eventByMonth[idx] = "default";
-      console.log(
-        `DEFAULT set at month index ${idx} ` +
-        `(loan ${loan.loanId}, date: ${e.date})`
-      );
-    } else {
-      console.warn(
-        `Default index null for loan ${loan.loanId} - date: ${e.date}`
-      );
     }
   }
 });
