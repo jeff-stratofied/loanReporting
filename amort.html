@@ -2098,6 +2098,10 @@ function buildInvestorAmortView(baseSchedule, loan, user) {
 function renderAmortForLoan(loan) {
   assert(loan, "renderAmortForLoan called with null loan");
 
+ // 🔑 HARD RESET — MUST LIVE HERE
+  amortBody.innerHTML = "";
+  drawerChartArea.innerHTML = "";
+  
   // -------------------------------------
   // Schedule selection (DRAWER ONLY)
   // -------------------------------------
