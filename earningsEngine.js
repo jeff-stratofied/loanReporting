@@ -140,37 +140,39 @@ const { waiveSetup, waiveMonthly, waiveAll } =
   // Normalize amort rows with ownership + calendar dates
   // (LOT-AWARE: ownership can change over time)
   // ----------------------------------------------------------
-  const normalized = amortSchedule.map(row => {
-    const loanDateRaw = addMonths(loanStart, row.monthIndex - 1);
-    const loanDate = new Date(
-      loanDateRaw.getFullYear(),
-      loanDateRaw.getMonth(),
-      1
-    );
+const normalized = amortSchedule.map((row, idx) => {
+  const loanDateRaw = addMonths(loanStart, row.monthIndex - 1);
+  const loanDate = new Date(
+    loanDateRaw.getFullYear(),
+    loanDateRaw.getMonth(),
+    1
+  );
 
-    // Ownership pct active for this calendar month
-    const ownershipPct = Array.isArray(ownershipLots)
-      ? ownershipLots.reduce((sum, lot) => {
-          if (!lot || lot.user !== user) return sum;
+  // Ownership pct active for this calendar month
+  const ownershipPct = Array.isArray(ownershipLots)
+    ? ownershipLots.reduce((sum, lot) => {
+        if (!lot || lot.user !== user) return sum;
 
-          const start = parseISODateLocal(lot.purchaseDate);
-          if (!(start instanceof Date) || !Number.isFinite(start.getTime())) return sum;
+        const start = parseISODateLocal(lot.purchaseDate);
+        if (!(start instanceof Date) || !Number.isFinite(start.getTime())) return sum;
 
-          // lot becomes active starting its purchase month
-          const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
-          return loanDate >= startMonth ? sum + Number(lot.pct || 0) : sum;
-        }, 0)
-      : 0;
+        // lot becomes active starting its purchase month
+        const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+        return loanDate >= startMonth ? sum + Number(lot.pct || 0) : sum;
+      }, 0)
+    : 0;
 
-    const isOwned = ownershipPct > 0;
+  const isOwned = ownershipPct > 0;
+  const isFirstPeriod = idx === 0;   // ✅ ADD THIS
 
-    return {
-      ...row,
-      loanDate,
-      ownershipPct,
-      isOwned
-    };
-  });
+  return {
+    ...row,
+    loanDate,
+    ownershipPct,
+    isOwned,
+    isFirstPeriod                // ✅ AND EXPOSE IT
+  };
+});
 
   // ----------------------------------------------------------
   // Earnings accumulation (AUTHORITATIVE)
