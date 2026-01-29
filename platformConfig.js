@@ -13,15 +13,17 @@ export let PLATFORM_CONFIG = {
 // ----------------------------------
 // Load platform config from GitHub
 // ----------------------------------
-export async function loadPlatformConfig(url) {
-  const res = await fetch(url, { cache: "no-store" });
+export async function loadPlatformConfig() {
+  const res = await fetch("/api/platform-config", {
+    cache: "no-store"
+  });
+
   if (!res.ok) {
     throw new Error(`Failed to load platform config: ${res.status}`);
   }
 
   const cfg = await res.json();
 
-  // Merge (do not replace object reference)
   PLATFORM_CONFIG.fees = cfg.fees || PLATFORM_CONFIG.fees;
   PLATFORM_CONFIG.users = cfg.users || {};
 }
