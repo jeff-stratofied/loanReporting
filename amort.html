@@ -3695,10 +3695,11 @@ function openDrawerForLoan(loan) {
   const ownershipStartIndex = getPurchaseMonthIndex();
 
   // 🔑 single source of truth – now with ownership styling
+ /* delete
   renderAmortForLoan(loan, ownershipStartIndex);   // ← pass index if renderAmortForLoan accepts it
-
+*/
   // If renderAmortForLoan does NOT accept extra params, use this version instead:
-  /*
+  
   loan.amort.schedule.forEach((r, index) => {
     const tr = document.createElement("tr");
 
@@ -3720,7 +3721,7 @@ function openDrawerForLoan(loan) {
 
     amortBody.appendChild(tr);
   });
-  */
+  
 
   // ----------------------------------
   // Open drawer
