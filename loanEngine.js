@@ -1077,6 +1077,3 @@ earningsKpis
 }
 
 
-window.__testResolveFeeWaiverFlags = resolveFeeWaiverFlags;
-
-
