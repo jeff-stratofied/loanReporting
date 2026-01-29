@@ -18,6 +18,8 @@ export async function loadPlatformConfig() {
     cache: "no-store"
   });
 
+Object.freeze(PLATFORM_CONFIG.fees);
+  
   if (!res.ok) {
     throw new Error(`Failed to load platform config: ${res.status}`);
   }
