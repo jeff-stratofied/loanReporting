@@ -141,11 +141,17 @@
         }
 
         .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-left: 70px;
-        }
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-left: var(--sidebar-width);    /* ← key change: padding instead of margin */
+    transition: padding-left 0.35s ease;   /* smooth like sidebar */
+}
+
+    /* When sidebar expands, update the variable */
+.sidebar.expanded ~ .main-container {
+    --sidebar-width: 260px;
+}
 
         .top-header {
             height: 60px;
