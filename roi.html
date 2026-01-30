@@ -4,309 +4,1048 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Loan Portfolio — ROI</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+  
+  <!-- ====================================
+       Styles (organized, with dark mode)
+       ==================================== -->
   <style>
-    /* ── Reporting shell layout & variables ── */
-    :root {
-      --bg: #f8fafc;
-      --surface: #f1f5f9;
-      --card: #ffffff;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --muted: #64748b;
-      --brand: #0ea5e9;
-      --shadow: 0 12px 30px rgba(15,23,42,0.06);
+  
+:root {
+  --bg:#f8fafc;
+  --surface:#f1f5f9;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+
+  --brand:#0ea5e9;
+  --accent:#7c3aed;
+
+  --shadow:0 12px 30px rgba(15,23,42,0.06);
+
+  --page-gradient: linear-gradient(180deg, var(--surface), var(--bg));
+
+  --chart-bg:linear-gradient(180deg,#ffffff,#fcfeff);
+  --grad-top:#f1f5f9;
+  --grad-bottom:#ffffff;
+
+  --tooltip-bg:#0f172a;
+  --tooltip-text:#f8fafc;
+
+  --table-header:var(--surface);
+  --table-border:rgba(148,163,184,0.35);
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+   color-scheme: dark; 
+  --bg:#0f172a;
+  --surface:#1e293b;
+  --card:#1e293b;
+  --border:#334155;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+
+  --brand:#38bdf8;
+  --accent:#c4b5fd;
+
+  --grad-top:#1e293b;
+  --grad-bottom:#0f172a;
+
+  --shadow:rgba(0,0,0,0.45);
+
+  --chart-bg:linear-gradient(180deg,#1e293b,#0f172a);
+
+  --tooltip-bg:#0f172a;
+  --tooltip-text:#f1f5f9;
+
+  --table-header:#1e293b;
+  --table-border:#334155;
+}
+
+
+.info-hover {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  cursor: help;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 50%;
+  line-height: 14px;
+  text-align: center;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+.info-hover:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+    
+    /* Smooth theme transitions (copied from amortization page) */
+    html, body,
+    .app,
+    header,
+    .kpi, .tile,
+    .drawer, .drawer-head, .drawer-body, .drawer-footer,
+    .info-card, .drawer-chart,
+    table, thead th, td,
+    .tooltip,
+    .theme-icon,
+    svg text {
+      transition:
+    background-color .25s ease,
+    color .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease,
+    fill .25s ease;
     }
 
-    html[data-theme="dark"] {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --brand: #38bdf8;
-      --shadow: rgba(0,0,0,0.45);
+    
+html,body{
+  height:100%;
+  margin:0;
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color:var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+  
+
+.loan-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  margin: 0 0 14px;
+}
+
+.loan-filters > * {
+  flex-shrink: 0;
+}
+
+.loan-filters select {
+  inline-size: 18ch;
+  min-inline-size: 18ch;
+  max-inline-size: 18ch;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+    /* =========================================
+   Filter row: right-aligned actions
+   ========================================= */
+    
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto; /* 🔑 pushes to right edge */
+}
+
+
+/* =========================================
+   View mode icon toggle (Full / Compact / Table)
+   ========================================= */
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.view-btn {
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.view-btn span {
+  height: 2px;
+  background: var(--muted);
+  border-radius: 2px;
+}
+
+.view-btn.active {
+  border-color: var(--brand);
+  background: rgba(14,165,233,0.08);
+}
+
+.view-btn.active span {
+  background: var(--brand);
+}
+
+.view-btn:hover {
+  border-color: var(--brand);
+}
+
+    
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+    
+/* ROI matches Earnings:
+   Page does NOT scroll; grid owns scrolling */
+.app {
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+body{
+  background: linear-gradient(180deg, var(--grad-top) 0%, var(--grad-bottom) 100%);
+  background-color: var(--bg);
+  transition: background-color .25s ease, color .25s ease;
+}
+
+/* Dark mode gradient (match Amort exactly) */
+html[data-theme="dark"] body {
+  background: linear-gradient(180deg,#0b1224 0%, #0f172a 100%);
+}
+
+    .app{
+      max-width:1200px;
+      margin:20px auto 0 auto;
+      padding:16px 16px 0 16px;
+    }
+    
+
+    body > .app {
+       background: transparent;
+      padding-top: 16px;
+      margin-top: 0;
     }
 
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
+
+    header {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-bottom:8px;   /* match amort */
+      padding:0;           /* remove invisible offset */
     }
 
-    .app {
-      height: 100%;
-      display: flex;
+    .header-top{display:flex;align-items:center;justify-content:space-between}
+    .header-controls {
+      display:flex;
+      gap:10px;
+      align-items:center;
     }
 
-    .sidebar {
-      position: fixed;
-      left: 0; top: 0; bottom: 0;
-      width: 70px;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      transition: width 0.35s ease;
-      z-index: 20;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      padding-top: 20px;
+/* =========================================
+   Contextual Back Navigation (Reporting → UI)
+   ========================================= */
+
+.back-row {
+  margin-bottom: 6px;
+}
+
+.back-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--brand);
+  transform: translateX(-2px);
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Hidden unless explicitly enabled */
+#backToHoldingsRow {
+  display: none;
+}
+
+    
+    h1{ font-size:20px; margin:0 }
+    p.lead{ margin:0; color:var(--muted); font-size:13px }
+    .current-date{ font-size:13px; color:var(--muted); margin-top:4px }
+    
+
+    
+    /* =========================
+       Buttons (unified with Amort Page)
+       ========================= */
+    .actions { display:flex; gap:8px; align-items:center }
+    .btn{ padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; cursor:pointer; font-weight:600; color:var(--text); transition:background .2s ease, color .2s ease, border-color .2s ease }
+    .btn.primary{
+    background:var(--brand);
+    color:white;
+    border:none;
+    box-shadow:var(--shadow);
+  }
+
+    .btn.secondary{ background:var(--surface); color:var(--text); }
+    .close-btn{ background:var(--surface); border:1px solid var(--border); padding:8px; border-radius:8px; cursor:pointer; }
+    .btn:hover, .close-btn:hover{ border-color:rgba(15,23,42,0.14); }
+
+    /* =========================
+       KPI row + tiles (unified hover)
+       ========================= */
+     .kpis {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin:14px 0 18px;
     }
 
-    .sidebar.expanded { width: 260px; padding: 20px 20px 0; }
-
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 30px;
-      justify-content: center;
+  .kpi{
+    background:var(--card);
+    padding:12px;
+    border-radius:10px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition: transform .18s, box-shadow .18s,
+              background-color .25s ease, color .25s ease,
+              border-color .25s ease;
+    }
+  .kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
 
-    .sidebar.expanded .sidebar-header { justify-content: flex-start; }
+  .kpi h3 { margin:0; font-size:12px; color:var(--muted); }
+  .kpi p  { margin:8px 0 0; font-size:18px; font-weight:700; }
 
-    .hamburger {
-      font-size: 24px;
-      color: var(--text);
-      cursor: pointer;
+
+/* ROI matches Earnings:
+   Loan grid is the ONLY scroll container */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  grid-auto-rows: min-content;
+  gap: 12px;
+
+  height: calc(100vh - 320px);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 6px;
+}
+
+
+    /* =========================
+   Compact loan tiles
+   ========================= */
+.grid.compact .tile {
+  min-height: 64px;           /* ~½ current height */
+  padding: 8px 10px;
+}
+
+.grid.compact .tile-left {
+  padding-right: 0;
+}
+
+.grid.compact .loan-sub,
+.grid.compact .loan-meta {
+  display: none;              /* hide details */
+}
+
+.grid.compact .chart-wrap svg {
+  display: none;              /* hide sparkline */
+}
+
+.grid.compact .chart-wrap {
+  width: auto;
+}
+
+.grid.compact .mini-label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 13px;
+}
+.grid.compact .loan-name {
+  font-size: 13px;
+}
+
+    
+  
+    @media(max-width:900px){ .grid{ grid-template-columns:1fr; height:auto } .kpis{ grid-template-columns:repeat(2,1fr) } }
+
+    /* =========================================
+   Loan event badges (ROI tiles)
+   ========================================= */
+.loan-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.loan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.loan-badge.default {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.loan-badge.deferral {
+  background: rgba(234, 179, 8, 0.18);
+  color: #92400e;
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.loan-badge.prepayment {
+  background: rgba(34, 197, 94, 0.18);
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+
+.badge-tooltip {
+  position: absolute;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2000;  
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transform: translateY(-8px);
+}
+
+    
+.badge-tooltip.visible {
+  opacity: 1;
+}
+
+/* =========================================
+   Ownership Pie (20-slice)
+   ========================================= */
+
+.ownership-pie {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+
+  cursor: pointer;              /* match event badge */
+  display: block;               /* avoid inline SVG baseline issues */
+
+  /* 🔑 vertical rhythm alignment */
+  position: relative;
+  top: 0.5px;
+
+  /* 🔑 smooth hover zoom */
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+/* Prevent layout shift during tooltip positioning */
+.ownership-pie:hover {
+  filter: brightness(1.05);
+}
+
+/* 🔑 Disable transforms when tooltip is active */
+.lens-tooltip-html ~ .ownership-pie,
+.lens-tooltip-html ~ .loan-badge {
+  transform: none !important;
+}
+
+
+    .ownership-pie:hover {
+  transform: scale(1.5);
+  filter: brightness(1.05);
+}
+  
+    
+/* MATCH AMORT TILE HOVER BEHAVIOR */
+.tile {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  border-radius:12px;
+  background:var(--card);
+  min-height:110px;
+  cursor:pointer;
+  overflow:hidden;
+  border:1px solid var(--border);
+  transition: transform .18s ease, box-shadow .18s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+.tile:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow);
+}
+
+/* =========================================
+   ROI — Compact tile school label
+   ========================================= */
+
+.loan-school {
+  font-size: 12px;
+  font-weight: 600;     /* 🔑 this is the key */
+  color: var(--text);   /* Amort uses text, not muted */
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+    
+    .tile-left{ flex:1; padding-right:10px }
+    .loan-name{ font-weight:700; font-size:14px }
+    .loan-sub{ font-size:12px; color:var(--muted); margin-top:6px }
+    .loan-meta{ display:flex; gap:8px; font-size:12px; color:var(--muted); margin-top:8px }
+
+    .chart-wrap{ width:170px; flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end }
+    .mini-label{ font-size:12px; color:var(--muted); margin-bottom:6px }
+    svg.sparkline{ width:170px; height:48px; display:block }
+
+/* ============================================
+   DRAWER (copied from amort, widened for ROI)
+   ============================================ */
+.drawer{
+  position:fixed;
+  right:0;
+  top:0;
+  height:100vh;
+  max-width:760px;
+  width:760px;
+  background:var(--card);
+  border-left:1px solid var(--border);
+  box-shadow:-28px 0 80px var(--drawer-shadow);
+  transform:translateX(110%);
+  transition:transform .28s cubic-bezier(.2,.9,.3,1),
+             background-color .25s ease, color .25s ease,
+             border-color .25s ease, box-shadow .25s ease;
+  display:flex;
+  flex-direction:column;
+  z-index:120;
+}
+.drawer.open{ transform:translateX(0); }
+
+.drawer-head{
+  padding:20px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  background:var(--card);   /* MATCH AMORT */
+  border-bottom:1px solid var(--border);
+}
+
+.drawer-body,
+#drawerBody{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  padding: 0 20px 20px;   /* KEY: no top padding */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+.drawer-footer{
+  padding:20px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+}
+
+.drawer-footer .actions{
+  justify-content:flex-start;
+}
+
+/* Chart box */
+.drawer-chart{
+  height:260px;
+  background:var(--chart-bg);
+  border-radius:8px;
+  border:1px solid rgba(15,23,42,0.06);
+  display:block;
+  position:relative;
+  padding:8px;
+  margin-bottom:12px;
+  box-shadow:0 6px 18px rgba(15,23,42,0.06);
+}
+    
+/* Dark theme behavior */
+html[data-theme="dark"] .drawer{
+  background:var(--drawer-bg);
+  border-left:1px solid var(--border);
+  box-shadow:-28px 0 80px var(--drawer-shadow);
+}
+html[data-theme="dark"] .drawer-chart{
+  border-color:var(--border);
+}
+
+    .drawer h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.drawer .muted {
+  font-size: 13px;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+
+    /* Drawer info row */
+    .drawer-info-row { display:flex; gap:12px; margin-bottom:8px; align-items:center }
+    .info-card{ flex:1; background:var(--bg); padding:12px; border-radius:8px; display:flex; flex-direction:column; justify-content:center; min-height:56px; border:1px solid var(--border) }
+   
+  
+    .info-card.small{ width:160px; align-items:flex-end }
+   
+    
+    .muted-small{ font-size:12px; color:var(--muted); margin-bottom:6px }
+    .main-val{ font-weight:800; font-size:18px }
+
+    .amort-wrap{ border:1px solid var(--border); border-radius:8px; padding:8px; max-height:40vh; overflow:auto; background:var(--card) }
+    table{ width:100%; border-collapse:collapse; font-size:13px; background:var(--card); }
+    thead th{ position:sticky; top:0; background:var(--table-header); padding:8px; text-align:left; color:var(--muted); font-weight:700; border-bottom:1px solid var(--table-border) }
+    td{ padding:8px; border-bottom:1px dashed var(--table-border); text-align:right }
+    td:first-child, th:first-child{ text-align:left }
+
+/* =========================================
+   ROI table event highlights (MATCH AMORT)
+   ========================================= */
+tr.event-prepayment td {
+  background: rgba(34, 197, 94, 0.16);
+}
+
+tr.event-deferral td {
+  background: rgba(234, 179, 8, 0.20);
+}
+
+tr.event-default td {
+  background: rgba(239, 68, 68, 0.20);
+}
+
+    
+  .tooltip{
+    position:fixed;
+    pointer-events:none;
+    background:var(--tooltip-bg);
+    color:var(--tooltip-text);
+    padding:6px 8px;
+    border-radius:6px;
+    font-size:12px;
+    transform:translate(-50%,-120%);
+    box-shadow:0 6px 18px rgba(2,6,23,0.2);
+    display:none;
+    z-index:9999;
+    line-height:1.12;
+    border:1px solid rgba(148,163,184,0.3);
+    transition:background-color .25s ease, color .25s ease,
+             border-color .25s ease, box-shadow .25s ease;
     }
 
-    .sidebar.expanded .hamburger { margin-right: 16px; }
+  
+    .small{ font-size:12px; color:var(--muted) }
 
-    .drawer-logo {
-      display: none;
-      height: 30px;
+    
+    /* tiny responsive tweaks */
+    @media(max-width:760px){
+      .drawer{ width:100%; min-width:0; }
+      .kpis{ grid-template-columns:repeat(2,1fr) }
     }
 
-    .sidebar.expanded .drawer-logo { display: block; }
-
-    .menu-item {
-      display: flex;
-      align-items: center;
-      padding: 16px 0;
-      cursor: pointer;
-      color: var(--text);
+    /* Theme toggle icon */
+  .theme-icon {
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    cursor:pointer;
+    font-size:16px;
+    transition:background .2s ease, color .2s ease, 
+             border-color .2s ease, transform .15s ease;
+    box-shadow:0 8px 18px rgba(15,23,42,0.06);
+    }
+  .theme-icon:hover{
+    transform:translateY(-1px);
+    border-color:rgba(15,23,42,0.14);
     }
 
-    .sidebar:not(.expanded) .menu-item { justify-content: center; }
 
-    .sidebar.expanded .menu-item {
-      padding: 16px 24px;
-      border-radius: 8px;
-    }
+/* ============================================================
+   EMBED MODE — UNIFIED & AUTHORITATIVE LAYOUT
+   Aligns ROI perfectly with Earnings & Amort
+   ============================================================ */
 
-    .menu-item:hover { background: var(--bg); }
+/* --------------------------------------------
+   APP — hard reset, no chrome influence
+   -------------------------------------------- */
+.embed-mode .app {
+  display: flex !important;
+  flex-direction: column !important;
 
-    .menu-item.active {
-      color: var(--brand);
-      font-weight: 600;
-    }
+  margin: 0 !important;
+  padding: 0 !important;
 
-    .menu-item i {
-      font-size: 24px;
-      width: 40px;
-      text-align: center;
-    }
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
 
-    .menu-label {
-      display: none;
-      margin-left: 20px;
-      font-size: 16px;
-      white-space: nowrap;
-    }
+/* Hide header / filters entirely in embed */
+.embed-mode header {
+  display: none !important;
+}
 
-    .sidebar.expanded .menu-label { display: inline; }
+/* --------------------------------------------
+   KPI ROW — canonical vertical rhythm
+   -------------------------------------------- */
+.embed-mode .kpis {
+  display: grid !important;
+  order: 0 !important;
 
-    .main-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      margin-left: 70px;
-    }
+  margin-top: 12px !important;
+  margin-bottom: 12px !important;
 
-    .top-header {
-      height: 60px;
-      background: #ffffff;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 30px;
-      box-shadow: var(--shadow);
-      gap: 20px;
-    }
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
 
-    .header-logo {
-      height: 42px;
-      margin-right: auto;
-    }
+/* --------------------------------------------
+   DRAWER — re-enter document flow
+   -------------------------------------------- */
+.embed-mode .drawer {
+  order: 1 !important;
 
-    .right-section {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
 
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-      font-weight: 500;
-    }
+  width: 100% !important;
+  max-width: none !important;
 
-    .user-image {
-      width: 36px;
-      height: 36px;
-      background: #e2e8f0;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
 
-    .user-image i {
-      font-size: 20px;
-      color: #64748b;
-    }
+  transform: none !important;
+}
 
-    .connected {
-      color: #10b981;
-      font-weight: 600;
-      font-size: 14px;
-    }
+/* --------------------------------------------
+   DRAWER HEADER — identical across all pages
+   -------------------------------------------- */
+.embed-mode .drawer-head {
+  padding: 20px !important;
+  min-height: 64px !important;
 
-    .logout {
-      color: var(--muted);
-      font-size: 20px;
-      cursor: pointer;
-    }
+  border-bottom: 1px solid var(--border) !important;
+  background: var(--card) !important;
 
-    .content {
-      flex: 1;
-      padding: 24px 40px;
-      overflow-y: auto;
-      background: var(--bg);
-    }
+  flex-shrink: 0 !important;
+}
 
-    /* ── Keep your original ROI styles below this line ── */
-    /* (leave everything else in your existing <style> block unchanged) */
+/* --------------------------------------------
+   DRAWER BODY — MATCH EARNINGS & AMORT EXACTLY
+   -------------------------------------------- */
+.embed-mode .drawer-body {
+  padding: 0 20px 20px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+}
+
+/* Normalize child spacing */
+.embed-mode .drawer-body > * {
+  margin-top: 0 !important;
+}
+
+/* --------------------------------------------
+   DRAWER CONTENT NORMALIZATION
+   -------------------------------------------- */
+.embed-mode .drawer-chart {
+  height: 240px !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  background: var(--chart-bg) !important;
+}
+
+.embed-mode .drawer-info-row {
+  margin: 0 !important;
+  min-height: 56px !important;
+}
+
+.embed-mode .drawer-footer {
+  display: none !important;
+}
+
+/* --------------------------------------------
+   GRID — allow natural height in embed
+   -------------------------------------------- */
+.embed-mode .grid {
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* --------------------------------------------
+   Feedback button (non-layout affecting)
+   -------------------------------------------- */
+#feedback-btn {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+
+
+    
+    
+.loan-table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+
+  padding: 8px 8px 0 8px;
+  margin-bottom: 12px;
+
+  max-height: calc(100vh - 320px); /* SAME logic as grid */
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+
+#loanTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#loanTable th {
+  cursor: pointer;
+  user-select: none;
+  position: sticky;
+  top: 0;
+  background: var(--table-header);
+}
+
+#loanTable th::after {
+  content: " ↕";
+  opacity: 0.35;
+  font-size: 11px;
+}
+
+    #loanTable th[data-sort="asc"]::after { content: " ↑"; opacity: 0.75; }
+#loanTable th[data-sort="desc"]::after { content: " ↓"; opacity: 0.75; }
+
+    
+#loanTable td,
+#loanTable th {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* =========================================
+   Loan table row hover (MATCH AMORT)
+   ========================================= */
+#loanTable tbody tr.row-hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+#loanTable tbody tr {
+  cursor: pointer;
+}
+    
+.table-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* =========================================
+   ROI TABLE — Event icon badge
+   ========================================= */
+.table-event-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.table-event-badge.prepayment {
+  background: rgba(34, 197, 94, 0.2);
+  color: #166534;
+}
+
+.table-event-badge.deferral {
+  background: rgba(234, 179, 8, 0.22);
+  color: #92400e;
+}
+
+.table-event-badge.default {
+  background: rgba(239, 68, 68, 0.22);
+  color: #991b1b;
+}
+
+    
+#feedback-btn:hover {
+  transform: scale(1.05);
+}
+
+    
   </style>
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar (Stratofied shell) -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="hamburger" id="hamburger">☰</div>
-        <img src="https://jeff-stratofied.github.io/loan-dashboard/assets/Full_Color.png" 
-             alt="Stratofied" class="drawer-logo">
-      </div>
-      <div class="menu-item">
-        <i class="fas fa-home"></i>
-        <span class="menu-label">Marketplace</span>
-      </div>
-      <div class="menu-item active">
-        <i class="fas fa-chart-line"></i>
-        <span class="menu-label">My Holdings</span>
-      </div>
-      <div class="menu-item">
-        <i class="fas fa-dollar-sign"></i>
-        <span class="menu-label">Earnings</span>
-      </div>
-      <div class="menu-item">
-        <i class="fas fa-file-invoice-dollar"></i>
-        <span class="menu-label">Amortization</span>
-      </div>
-    </aside>
+  <div class="app" role="main">
 
-    <div class="main-container">
-      <!-- Top header (Stratofied shell) -->
-      <header class="top-header">
-        <img src="https://jeff-stratofied.github.io/loan-dashboard/assets/Full_Color.png" 
-             alt="STRATOFIED" class="header-logo">
-        <div class="right-section">
-          <div class="user-info">
-            <div class="user-image"><i class="fas fa-user"></i></div>
-            <span id="currentUserDisplay">Jeff Customer</span>
-          </div>
-          <div class="connected">✓ Connected</div>
-          <div class="logout"><i class="fas fa-sign-out-alt"></i></div>
-          <!-- Theme toggle moved here -->
-          <button id="themeToggle" class="theme-icon" title="Toggle dark mode">🌙</button>
+      <!-- Header here -->
+  <header>
+      <!-- Contextual back navigation -->
+  <div class="back-row" id="backToHoldingsRow">
+    <button class="back-link" id="backToHoldingsBtn" type="button">
+      ← Back to My Holdings
+    </button>
+  </div>
+
+    <div class="header-top">
+      <div>
+        <h1>Loan Portfolio — ROI</h1>
+       <p class="lead">
+    ROI to Date = (Loan Value Today – Purchase Price) / Purchase Price
+    <span class="info-hover" title="ROI to Date measures your current return up to the current month. It includes all principal and interest already received, minus fees, plus the Mark-to-Market discounted value (95%) of the outstanding loan balance.">ⓘ</span>
+    </p>
+
+    <p class="lead">
+    Projected ROI = (Final Loan Value – Purchase Price) / Purchase Price
+    <span class="info-hover" title="Projected ROI measures the total return expected if the loan performs as scheduled through maturity. It uses the full amortization schedule of principal, interest, and fees.">ⓘ</span>
+    </p>
+      </div>
+  
+      <div class="header-controls">
+        <div style="font-size:13px;color:var(--muted)">
+          Name: <strong id="currentUserLabel" style="color:var(--brand)"></strong>
         </div>
-      </header>
+        <button id="themeToggle" class="theme-icon" title="Toggle dark mode">🌙</button>
+      </div>
+    </div>
 
-      <!-- Main content area -->
-      <main class="content">
+    <div class="current-date" id="currentDateLabel">
+      Current Date: <span id="currentDate"></span>
+    </div>
+  </header>
 
-        <!-- Back link (kept) -->
-        <div class="back-row" id="backToHoldingsRow">
-          <button class="back-link" id="backToHoldingsBtn" type="button">
-            ← Back to My Holdings
-          </button>
-        </div>
 
-        <!-- Your original header content (explanation + date), without user name or theme toggle -->
-        <header>
-          <div class="header-top">
-            <div>
-              <h1>Loan Portfolio — ROI</h1>
-              <p class="lead">
-                ROI to Date = (Loan Value Today – Purchase Price) / Purchase Price
-                <span class="info-hover" title="ROI to Date measures your current return up to the current month. It includes all principal and interest already received, minus fees, plus the Mark-to-Market discounted value (95%) of the outstanding loan balance.">ⓘ</span>
-              </p>
-              <p class="lead">
-                Projected ROI = (Final Loan Value – Purchase Price) / Purchase Price
-                <span class="info-hover" title="Projected ROI measures the total return expected if the loan performs as scheduled through maturity. It uses the full amortization schedule of principal, interest, and fees.">ⓘ</span>
-              </p>
-            </div>
-          </div>
-          <div class="current-date" id="currentDateLabel">
-            Current Date: <span id="currentDate"></span>
-          </div>
-        </header>
 
-        <!-- KPI Row (unchanged) -->
-        <section class="kpis" id="kpis"></section>
+    <!-- KPI Row -->
+   <section class="kpis" id="kpis"></section>
+  
+  <!-- Loan Filters -->
+<section class="loan-filters" id="loanFilters">
 
-        <!-- Loan Filters (unchanged – view toggle still here if you want it) -->
-        <section class="loan-filters" id="loanFilters">
-          <!-- LEFT: filters -->
-          <select id="filterName">
-            <option value="" disabled selected>Name</option>
-          </select>
-          <select id="filterSchool">
-            <option value="" disabled selected>School</option>
-          </select>
-          <select id="filterRate">
-            <option value="" disabled selected>Rate</option>
-          </select>
-          <select id="sortLoans">
-            <option value="" disabled selected>Sort</option>
-          </select>
-          <button class="btn secondary" id="resetFilters">Reset</button>
-          <!-- RIGHT: view + actions (kept – this is where view toggle lives now if desired) -->
-          <div class="filter-actions">
-            <div class="view-toggle" role="group" aria-label="View mode">
-              <button type="button" class="view-btn" data-view="full" title="Full tiles"><span></span></button>
-              <button type="button" class="view-btn" data-view="compact" title="Compact tiles"><span></span><span></span></button>
-              <button type="button" class="view-btn" data-view="table" title="Table view"><span></span><span></span><span></span></button>
-            </div>
-            <div class="table-actions">
-              <button class="btn" id="downloadAllCsvBtn">Download CSV</button>
-              <button class="btn" id="copyAllCsvBtn">Copy CSV</button>
-              <button class="btn" id="printAllBtn">Print</button>
-            </div>
-          </div>
-        </section>
+  <!-- LEFT: filters -->
+  <select id="filterName">
+  <option value="" disabled selected>Name</option>
+</select>
+  <select id="filterSchool">
+  <option value="" disabled selected>School</option>
+</select>
+ <select id="filterRate">
+  <option value="" disabled selected>Rate</option>
+</select>
+  <select id="sortLoans">
+  <option value="" disabled selected>Sort</option>
+</select>
+  <button class="btn secondary" id="resetFilters">Reset</button>
+
+  <!-- RIGHT: view + actions -->
+  <div class="filter-actions">
+    <div class="view-toggle" role="group" aria-label="View mode">
+      <button type="button" class="view-btn" data-view="full" title="Full tiles"><span></span></button>
+      <button type="button" class="view-btn" data-view="compact" title="Compact tiles"><span></span><span></span></button>
+      <button type="button" class="view-btn" data-view="table" title="Table view"><span></span><span></span><span></span></button>
+    </div>
+
+    <div class="table-actions">
+      <button class="btn" id="downloadAllCsvBtn">Download CSV</button>
+      <button class="btn" id="copyAllCsvBtn">Copy CSV</button>
+      <button class="btn" id="printAllBtn">Print</button>
+    </div>
+  </div>
+
+</section>
 
 
   
@@ -4769,29 +5508,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
 <script src="/loanreporting/feedback.js"></script>
 
-<script>
-  // Sidebar toggle
-  document.getElementById('hamburger').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('expanded');
-  });
-
-  // User name in header (no dropdown)
-  const displayNames = {
-    "jeff": "Jeff Customer",
-    "nick": "Nick Lender",
-    "john": "John Investor"
-  };
-
-  function getActiveUser() {
-    const params = new URLSearchParams(location.search);
-    let user = params.get("user");
-    if (!user || !displayNames[user]) user = "jeff";
-    return user;
-  }
-
-  document.getElementById('currentUserDisplay').textContent = displayNames[getActiveUser()];
-</script>
-        
     
 </body>
 </html>
