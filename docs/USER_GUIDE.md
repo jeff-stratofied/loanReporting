@@ -1,6 +1,14 @@
-# Loan Admin – User Guide
+# Loan Reporting – User Guide
 
-## What this page controls
+## General Setup
+The loan reporting platform uses this Admin page to create loans, add loan events (prepayment, deferrals, defaults), manage the fees paid by the users, and (future) manage the users on the platform.
+The user of this platform can select the user whose portfolio they want to see and visit the ROI, Earnings, and Amort Schedule pages.
+The main Reporting Portal page allows user selection, also.
+The ROI, Earnings, and Amort pages are primarily UI pages, and logic is controled by shared .js files.
+
+---
+
+## What the Admin page controls
 The Loan Admin page drives all data used by the ROI, Earnings,
 and Amortization views.
 
