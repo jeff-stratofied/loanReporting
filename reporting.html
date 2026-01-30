@@ -7,33 +7,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        :root {
-            --bg: #f8fafc;
-            --surface: #f1f5f9;
-            --card: #ffffff;
-            --border: #e2e8f0;
-            --text: #0f172a;
-            --muted: #64748b;
-            --brand: #0ea5e9;
-            --shadow: 0 12px 30px rgba(15,23,42,0.06);
-            --grad-top: var(--surface);
-            --grad-bottom: var(--card);
-        }
+  :root {
+    --bg: #f8fafc;
+    --surface: #f1f5f9;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --brand: #0ea5e9;
+    --shadow: 0 12px 30px rgba(15,23,42,0.06);
+    
+    --grad-top: var(--surface);
+    --grad-bottom: var(--card);
+}
 
-        html[data-theme="dark"] body {
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(180deg, var(--grad-top) 0%, var(--grad-bottom) 100%);
+    background-color: var(--bg);           /* fallback if gradient fails */
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* Dark mode — placed after body rule so it wins */
+html[data-theme="dark"] body {
     background: linear-gradient(180deg, #0b1224 0%, #0f172a 100%);
 }
-        
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(180deg, var(--grad-top) 0%, var(--grad-bottom) 100%);
-    background-color: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-        }
 
         .app {
             height: 100%;
