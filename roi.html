@@ -3743,7 +3743,7 @@ async function initROI() {
           if (!openKey) return;
 
           const url = new URL(
-            window.location.origin + "/loan-dashboard/roi"
+            window.location.origin + "/loanreporting/roi"
           );
           url.searchParams.set("user", PAGE_USER);
           url.searchParams.set("open", openKey);
@@ -5134,7 +5134,7 @@ if (EMBED_MODE) {
 
       const user = PAGE_USER || "jeff";
       window.top.location.href =
-        `/loanreporting/roi.html?user=${user}&from=reporting&open=kpi2`;
+        `/loanreporting/roi-shell.html?user=${user}&from=reporting&open=kpi2`;
     },
     { passive: true }
   );
@@ -5259,7 +5259,7 @@ const _OPEN_TARGET = _embedParams.get("open"); // Parse open param here
 if (_IS_EMBED) {
   const user = PAGE_USER || "jeff";
   const targetUrl =
-    `/loanreporting/roi.html?user=${user}&from=reporting&open=kpi2`;
+    `/loanreporting/roi-shell.html?user=${user}&from=reporting&open=kpi2`;
 
   function redirectToFullROI(e) {
     e.preventDefault();
