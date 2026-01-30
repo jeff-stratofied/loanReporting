@@ -630,23 +630,36 @@ function buildFrames(user) {
 // 8. CROSS-IFRAME MESSAGING
 // ===================================================
 
-        // =========================================
-        // Handle "Back to My Holdings" from iframes
-        // =========================================
-        window.addEventListener("message", (event) => {
-          if (event.data?.type === "back-to-my-holdings") {
-            // Ensure Reporting → My Holdings tab is active
-            const tabs = document.querySelectorAll(".reporting-tab");
-            tabs.forEach(tab => tab.classList.remove("active"));
-            const holdingsTab = document.querySelector(".reporting-tab.active") ||
-                        document.querySelector(".reporting-tab:nth-child(2)");
-            if (holdingsTab) holdingsTab.classList.add("active");
+// =========================================
+// Handle "Back to My Holdings" from iframes
+// =========================================
+window.addEventListener("message", (event) => {
+  if (event.data?.type !== "back-to-my-holdings") return;
 
-        // Scroll Reporting content to top (polish)
-        const content = document.querySelector(".content");
-        if (content) content.scrollTop = 0;
-      }
-    });
+  // Only act if we are the top-level window (not inside an iframe ourselves)
+  if (window === window.top) {
+    // We're already on the top-level reporting page → just scroll & ensure correct tab
+    const tabs = document.querySelectorAll(".reporting-tab");
+    tabs.forEach(tab => tab.classList.remove("active"));
+    
+    // Prefer the "My Holdings" tab (second one)
+    const holdingsTab = document.querySelector(".reporting-tab:nth-child(2)") ||
+                       document.querySelector(".reporting-tab.active");
+    
+    if (holdingsTab) holdingsTab.classList.add("active");
+
+    // Optional: smooth scroll to top
+    const content = document.querySelector(".content");
+    if (content) {
+      content.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  } else {
+    // We are inside an iframe (shell situation) → tell parent to navigate
+    window.top.postMessage({
+      type: "navigate-to-holdings"
+    }, "*");
+  }
+});
 
         
     </script>
