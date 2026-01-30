@@ -1417,13 +1417,6 @@ const earningsDataReady = new Promise(resolve => {
   earningsDataReadyResolve = resolve;
 });
 
-  
-const urlParams = new URLSearchParams(window.location.search);
-
-const PAGE_USER = urlParams.get("user") || "jeff";
-const isEmbed   = urlParams.get("embed") === "true";
-const cameFromReporting = urlParams.get("from") === "reporting";
-
 
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -1432,7 +1425,6 @@ const cameFromReporting = urlParams.get("from") === "reporting";
   const isShell   = urlParams.get("shell") === "true";   // ← ADD THIS
   const cameFromReporting = urlParams.get("from") === "reporting";
 
-  // ... rest of your script ...
 
   if (isShell) {
     document.body.classList.add("shell");
@@ -1442,7 +1434,6 @@ const cameFromReporting = urlParams.get("from") === "reporting";
     document.documentElement.classList.add("embed-mode");
   }
 
-  // ... rest of your script ...
   
 // =====================================================
 // FULL PAGE RELOAD ONLY — clear transient drawer navigation
