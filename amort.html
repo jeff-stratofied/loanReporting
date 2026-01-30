@@ -3748,7 +3748,8 @@ updateAmortViewButtons(false); // visual only, no render
   // ----------------------------------
   drawerAmortContainer.style.display = "block";
   amortBody.innerHTML = "";
-
+console.log("Amort body cleared. Current row count:", amortBody.children.length);
+  
   // 🔑 single source of truth
   /* delete
   renderAmortForLoan(loan);
@@ -3763,7 +3764,7 @@ updateAmortViewButtons(false); // visual only, no render
   drawerBody.scrollTop = 0;
 }
 
-
+console.log("Drawer opened. Final row count in amortBody:", amortBody.children.length);
 
     /* ============================
        KPI drawers: Distribution, TPV, Rates, Payments
