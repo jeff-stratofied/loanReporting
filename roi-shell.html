@@ -203,23 +203,16 @@
 
         .content {
           flex: 1;
-          padding: 0;  /* Remove padding to make full size */
-          overflow: hidden;  /* Hide overflow for full iframe */
+          padding: 0;  /* No padding to maximize size */
+          overflow: hidden;  /* Hide any overflow */
           background: var(--bg);
-          max-width: 1400px;
-          margin: 0 auto;  /* Center */
+          display: flex;
+          flex-direction: column;
         }
 
-        iframe {
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-
-        /* Back button style */
         .back-row {
-          margin-bottom: 16px;
-          padding: 24px 40px 0;  /* Match original content padding */
+          padding: 24px 40px 0;
+          flex-shrink: 0;  /* Don't let back button shrink */
         }
 
         .back-link {
@@ -230,6 +223,20 @@
           cursor: pointer;
           font-weight: 500;
           font-size: 16px;
+        }
+
+        .iframe-wrapper {
+          flex: 1;  /* Take all remaining space */
+          max-width: 1400px;
+          margin: 0 auto;  /* Center horizontally */
+          padding: 0 40px;  /* Side padding for centering */
+          box-sizing: border-box;
+        }
+
+        iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
         }
   </style>
 </head>
@@ -281,8 +288,10 @@
           <button class="back-link" onclick="history.back()">← Back to My Holdings</button>
         </div>
 
-        <!-- Iframe -->
-        <iframe id="roiContent" src=""></iframe>
+        <!-- Wrapper for centering iframe -->
+        <div class="iframe-wrapper">
+          <iframe id="roiContent" src=""></iframe>
+        </div>
       </main>
     </div>
   </div>
