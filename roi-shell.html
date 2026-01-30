@@ -203,11 +203,11 @@
 
         .content {
           flex: 1;
-          padding: 24px 40px;
-          overflow-y: auto;
+          padding: 0;  /* Remove padding to make full size */
+          overflow: hidden;  /* Hide overflow for full iframe */
           background: var(--bg);
-          max-width: 1400px;  /* Center with max-width */
-          margin: 0 auto;  /* Center horizontally */
+          max-width: 1400px;
+          margin: 0 auto;  /* Center */
         }
 
         iframe {
@@ -216,9 +216,10 @@
           border: none;
         }
 
-        /* Back button style (matches your ROI back link) */
+        /* Back button style */
         .back-row {
           margin-bottom: 16px;
+          padding: 24px 40px 0;  /* Match original content padding */
         }
 
         .back-link {
