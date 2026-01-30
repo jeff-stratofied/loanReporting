@@ -355,6 +355,71 @@ input:focus, select:focus {
   transform: scale(1.05);
 }
 
+  .user-guide-btn {
+  border: 1px solid var(--brand);
+  background: white;
+  color: var(--brand);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+.user-guide-btn:hover {
+  background: var(--brand);
+  color: white;
+}
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 90;
+}
+
+.guide-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  height: 100%;
+  background: white;
+  box-shadow: -20px 0 40px rgba(0,0,0,0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.guide-header button {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.guide-content {
+  padding: 20px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none;
+}
 
 </style>
 
@@ -374,6 +439,10 @@ input:focus, select:focus {
 
   <div class="header-right">
     <!-- NAVIGATION BUTTON -->
+<button id="userGuideBtn" class="user-guide-btn">
+  📘 User Guide
+</button>
+    
 <button id="port-btn">
   📊 MY HOLDINGS
 </button>
@@ -1970,9 +2039,56 @@ loanTable.addEventListener("change", (e) => {
     window.open(`/loanreporting/reporting.html?user=${user}`, '_blank');
   };
 
+const guideBtn = document.getElementById("userGuideBtn");
+const guideDrawer = document.getElementById("userGuideDrawer");
+const guideOverlay = document.getElementById("userGuideOverlay");
+const closeGuide = document.getElementById("closeGuide");
+const guideContent = document.getElementById("guideContent");
+
+async function loadUserGuide() {
+  const res = await fetch("./docs/USER_GUIDE.md");
+  const md = await res.text();
+  guideContent.innerHTML = marked.parse(md);
+}
+
+guideBtn?.addEventListener("click", async () => {
+  guideDrawer.classList.remove("hidden");
+  guideOverlay.classList.remove("hidden");
+  await loadUserGuide();
+});
+
+function closeGuideFn() {
+  guideDrawer.classList.add("hidden");
+  guideOverlay.classList.add("hidden");
+}
+
+closeGuide?.addEventListener("click", closeGuideFn);
+guideOverlay?.addEventListener("click", closeGuideFn);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeGuideFn();
+});
+  
 </script>
 
 <script src="/loanreporting/feedback.js?v=dev"></script>
+
+<!-- User Guide Overlay -->
+<div id="userGuideOverlay" class="guide-overlay hidden"></div>
+
+<!-- User Guide Drawer -->
+<aside id="userGuideDrawer" class="guide-drawer hidden">
+  <div class="guide-header">
+    <h2>Loan Admin – User Guide</h2>
+    <button id="closeGuide">✕</button>
+  </div>
+
+  <div id="guideContent" class="guide-content">
+    Loading guide…
+  </div>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   
 </body>
 </html>
