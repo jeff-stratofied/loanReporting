@@ -5024,14 +5024,42 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   // Initial theme from localStorage (shared with shell)
-  const saved = localStorage.getItem("theme");
-  if (saved) applyTheme(saved);
+  let saved = localStorage.getItem("theme");
+
+  // Fallback to system preference if no saved theme
+  if (!saved) {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    saved = prefersDark ? "dark" : "light";
+  }
+
+  applyTheme(saved);
 
   // Listen for theme changes broadcast from shell
   window.addEventListener("storage", (e) => {
     if (e.key === "theme" && e.newValue) {
       applyTheme(e.newValue);
     }
+  });
+
+  // 3. Toggle button (only if NOT shell mode)
+  const toggle = document.getElementById("themeToggle");
+  if (!toggle || isShell) return;
+
+  // Update toggle icon / label based on current theme
+  toggle.textContent = saved === "dark" ? "☀️" : "🌙";
+  toggle.setAttribute("aria-label", saved === "dark" ? "Switch to light mode" : "Switch to dark mode");
+  toggle.setAttribute("title", saved === "dark" ? "Switch to light mode" : "Switch to dark mode");
+
+  // Click handler to toggle + save
+  toggle.addEventListener("click", () => {
+    const nextTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+
+    // Update toggle UI
+    toggle.textContent = nextTheme === "dark" ? "☀️" : "🌙";
+    toggle.setAttribute("aria-label", nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+    toggle.setAttribute("title", nextTheme === "dark" ? "Switch to light mode" : "Switch to dark mode");
   });
 });
 
