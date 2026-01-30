@@ -305,15 +305,14 @@
       document.getElementById("currentUserDisplay").textContent = displayNames[user] || "User";
     });
 
-// Listen for navigation request from nested reporting content
+// Listen for Back to My Holdings from the ROI iframe content
 window.addEventListener("message", (event) => {
-  if (event.data?.type === "navigate-to-holdings") {
-    const user = new URLSearchParams(window.location.search).get("user") || "jeff";
-    
-    // Navigate top window back to My Holdings view
-    window.location.href = `/loanreporting/reporting.html?user=${user}`;
-    // Alternative (preserves more history): 
-    // window.top.location.href = `/loanreporting/reporting.html?user=${user}`;
+  if (event.data?.type === "back-to-my-holdings") {
+    const urlParams = new URLSearchParams(window.location.search);
+    const user = urlParams.get("user") || "jeff";
+
+    // Navigate the TOP window (escape iframe completely)
+    window.top.location.href = `/loanreporting/reporting.html?user=${user}`;
   }
 });
     
