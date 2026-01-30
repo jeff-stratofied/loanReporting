@@ -1280,23 +1280,23 @@ viewButtons.forEach(btn => {
   const PAGE_USER =
   new URLSearchParams(window.location.search).get("user") || "jeff";
 
-    // =========================================
+// =========================================
 // Back to My Holdings (Reporting context)
 // =========================================
 const cameFromReporting = PAGE_CONTEXT.fromReporting;
-
-const backRow = document.getElementById("backToHoldingsRow");
-const backBtn = document.getElementById("backToHoldingsBtn");
+const backRow  = document.getElementById("backToHoldingsRow");
+const backBtn  = document.getElementById("backToHoldingsBtn");
 
 if (cameFromReporting && backRow && backBtn) {
   backRow.style.display = "block";
-
+  
   backBtn.addEventListener("click", () => {
-    window.location.href =
-      `/loanreporting/reporting?user=${PAGE_USER}`;
+    // Tell parent/top window to navigate
+    window.parent.postMessage({
+      type: "back-to-my-holdings"
+    }, "*");
   });
 }
-
     const USER_LABELS = {
   jeff: "Jeff Customer",
   nick: "Nick Lender",
