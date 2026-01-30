@@ -2046,7 +2046,7 @@ const closeGuide = document.getElementById("closeGuide");
 const guideContent = document.getElementById("guideContent");
 
 async function loadUserGuide() {
-  const res = await fetch("./docs/USER_GUIDE.md");
+  const res = await fetch("./docs/USER_GUIDE.md?v=dev");
   const md = await res.text();
   guideContent.innerHTML = marked.parse(md);
 }
